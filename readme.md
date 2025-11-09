@@ -154,3 +154,4 @@ Parts of the core code, this README, and documentation strings were generated wi
 - Is it possible to write tests for the functionality
 - Add ARM build to CI/CD pipeline as soon as they are available via github actions
 - Add Dockerfile for devcontainer
+- Basic tests which test installation of wheels, import of functions and function calls.
