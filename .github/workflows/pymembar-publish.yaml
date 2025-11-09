@@ -16,7 +16,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
-      - name: Running Pipeline
+      - name: Setup Python
         uses: actions/setup-python@v5
 
       - name: Build C extension
