@@ -55,6 +55,3 @@ membar = ["*.pyi", "py.typed"]
 [tool.pdm]
 version = { source = "file", path = "membar/__init__.py" }
 distribution = true
-
-[project.urls]
-homepage = "https://github.com/fwkrumm/mymembar"
