@@ -28,7 +28,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install twine
-          pip install -u packaging
+          pip install -U packaging
           twine upload --repository testpypi dist/*.whl --verbose || { echo "::error:: ❌ Error: Upload failed. Possibly because the version already exists."; exit 1; }
         env:
           TWINE_USERNAME: __token__
