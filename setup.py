@@ -1,4 +1,14 @@
 from setuptools import setup, Extension, find_packages
+import re
+
+def get_version():
+    """Read version from membar/__init__.py"""
+    with open("membar/__init__.py", "r") as f:
+        content = f.read()
+        match = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', content, re.MULTILINE)
+        if match:
+            return match.group(1)
+    raise RuntimeError("Version string not found in membar/__init__.py")
 
 membar_module = Extension(
     "membar._membar",  # Use underscore to indicate private/internal module
@@ -8,6 +18,7 @@ membar_module = Extension(
 
 setup(
     name="pymembar",
+    version=get_version(),
     description="Python bindings for memory barriers",
     packages=find_packages(),
     py_modules=["membar"],

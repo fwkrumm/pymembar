@@ -5,7 +5,7 @@ module/*
 out/*
 wheel/*
 wheelhouse/*
-membar.egg-info/*
+pymembar.egg-info/*
 lib/*
 bin/*
 *.json

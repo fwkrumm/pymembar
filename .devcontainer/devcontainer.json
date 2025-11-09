@@ -1,0 +1,41 @@
+{
+  "name": "pymembar Development",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12-bullseye",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "installOhMyZsh": true,
+      "upgradePackages": true
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true,
+        "python.formatting.provider": "black",
+        "python.testing.unittestEnabled": true,
+        "python.testing.unittestArgs": [
+          "-v",
+          "-s",
+          "./tests",
+          "-p",
+          "test_*.py"
+        ]
+      }
+    }
+  },
+
+  "postCreateCommand": "pip install --upgrade pip && pip install build setuptools wheel twine pylint black",
+
+  "remoteUser": "vscode"
+}

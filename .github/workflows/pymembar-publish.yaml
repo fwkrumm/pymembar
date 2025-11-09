@@ -16,7 +16,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
-      - name: Python Publishing
+      - name: Running Pipeline
         uses: actions/setup-python@v5
 
       - name: Build C extension
@@ -26,7 +26,7 @@ jobs:
         env:
           CIBW_TEST_COMMAND_LINUX: "python -m unittest discover -s {project}/tests -p 'test_*.py' -v"
           CIBW_TEST_COMMAND_MACOS: "python -m unittest discover -s {project}/tests -p 'test_*.py' -v"
-          CIBW_TEST_COMMAND_WINDOWS: "dir {project} && python -m unittest discover -s {project}\\tests -p test_*.py -v"
+          CIBW_TEST_COMMAND_WINDOWS: "python -m unittest discover -s {project}\\tests -p test_*.py -v"
 
       # Only publish to PyPI on pushes to master branch; make sure the version is not already published
       - name: Publish to PyPI
