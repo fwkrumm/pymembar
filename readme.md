@@ -1,5 +1,3 @@
-# **WIP**
-
 # Python Memory Barrier (pymembar)
 
 Memory barrier utilities for Python - provides low-level memory ordering primitives for concurrent programming. Usually you would not need this in Python due to GIL and generally strong memory ordering on x86/x86_64. However, on weakly-ordered architectures like ARM, memory barriers can be useful for ensuring correct visibility and ordering of memory operations when for example working with shared memory, named semaphores, or lock-free data structures.
