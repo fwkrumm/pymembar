@@ -52,5 +52,6 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           # note default output dir after repair: wheelhouse
-          python -m pip install auditwheel patchelf
-          python -m auditwheel repair dist/*
+          python -m pip install auditwheel 
+          python -m auditwheel show dist/*.whl
+          python -m auditwheel repair dist/*whl
