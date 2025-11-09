@@ -5,13 +5,12 @@ Tests that the API works without crashing.
 
 import unittest
 import sys
-import os
 
 try:
     import membar
 except ImportError as e:
-    print(f"Failed to import membar: {e}")
-    print("Make sure to build the module first!")
+    print(f"Failed to import membar module: {e}")
+    print("Make sure to build and install the module first; cf. readme.md.")
     sys.exit(1)
 
 
