@@ -24,7 +24,7 @@ jobs:
         with:
           output-dir: dist
         env:
-          CIBW_TEST_COMMAND: "ls -lah && cd tests && python -m unittest discover -v"
+          CIBW_TEST_COMMAND: "ls -lah {project}/test && ls -lah {project}/tests&& python -m unittest discover -s {project}/tests -p 'test_*.py' -v"
 
       - name: Publish to Test PyPI
         run: |
