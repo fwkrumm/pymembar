@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: [3.8.*, 3.9.*, 3.10.*, 3.11.*, 3.12.*, 3.13.*, 3.x]
+        python-version: [3.9.*, 3.10.*, 3.11.*, 3.12.*, 3.13.*, 3.x]
     steps:
       - uses: actions/checkout@v4
       - name: Python unit testing
@@ -49,9 +49,6 @@ jobs:
           python -m build --wheel
 
       - name: Fix for Linux
-        env:
-          CIBW_BUILD: "cp38-* cp39-* pp38-*"
-          CIBW_ENABLE_PYPY: true
         if: runner.os == 'Linux'
         run: |
           # note default output dir after repair: wheelhouse
