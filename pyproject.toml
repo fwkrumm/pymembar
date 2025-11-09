@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=77.0.0", "wheel"]
+requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "membar"
-version = "1.0.0"
+version = "0.0.1"
 description = "Memory barrier utilities for Python - provides wmb, rmb, and fence operations"
 readme = "readme.md"
 authors = [
@@ -33,7 +33,7 @@ classifiers = [
     "Topic :: System :: Operating System",
     "Typing :: Typed"
 ]
-license = "BSD-3-Clause"
+license = {file = "LICENSE.txt"}
 requires-python = ">=3.8"
 dependencies = []
 

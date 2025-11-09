@@ -8,7 +8,6 @@ membar_module = Extension(
 
 setup(
     name="pymembar",
-    version="1.0",
     description="Python bindings for memory barriers",
     packages=find_packages(),
     py_modules=["membar"],

@@ -42,8 +42,15 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install build setuptools wheel
+          python -m pip install build setuptools wheel twine
 
       - name: Build C extension
         run: |
           python -m build --wheel --outdir wheel
+
+      - name: Fix for Linux
+        if: runner.os == 'Linux'
+          # note default output dir after repair: wheelhouse
+          run: |
+            python -m pip install auditwheel
+            python -m auditwheel repair dist/* 
