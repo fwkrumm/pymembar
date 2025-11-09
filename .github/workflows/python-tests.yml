@@ -48,14 +48,11 @@ jobs:
         run: |
           python -m build --wheel
 
-      - name: Fix for Linux
+      - name: Build wheels
         if: runner.os == 'Linux'
-        run: |
-          # note default output dir after repair: wheelhouse
-          python -m cibuildwheel --platform linux
-          python -m pip install auditwheel 
-          python -m auditwheel show dist/*.whl
-          python -m auditwheel repair dist/*whl
+        uses: pypa/cibuildwheel@v2.16.5
+        with:
+          output-dir: wheelhouse
           
       - name: Publish to Test PyPI
         if: false
