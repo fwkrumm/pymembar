@@ -50,7 +50,7 @@ jobs:
 
       - name: Fix for Linux
         if: runner.os == 'Linux'
-          # note default output dir after repair: wheelhouse
           run: |
+            # note default output dir after repair: wheelhouse
             python -m pip install auditwheel
             python -m auditwheel repair dist/* 
