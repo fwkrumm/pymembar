@@ -1,0 +1,49 @@
+name: CI_mymembar
+
+on: [push, pull_request]
+
+# limit GITHUB_TOKEN permissions
+permissions:
+  contents: read
+
+jobs:
+  Unittests:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: [3.8.*, 3.9.*, 3.10.*, 3.11.*, 3.12.*, 3.13.*, 3.x]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python unit testing
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          
+          
+      - name: Install system dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake
+
+      - name: Install system dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install cmake
+
+      - name: Install system dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          # Visual Studio Build Tools should be available
+          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build setuptools wheel
+
+      - name: Build C extension
+        run: |
+          python -m build --wheel --outdir wheel

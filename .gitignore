@@ -1,0 +1,16 @@
+build/*
+*/build/*
+dist/*
+module/*
+out/*
+wheel/*
+wheelhouse/*
+membar.egg-info/*
+lib/*
+bin/*
+*.json
+*.bak
+__pycache__
+
+# generated
+__init__.pyi

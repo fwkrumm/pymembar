@@ -1,0 +1,2 @@
+include include/membar.h
+include membar/__init__.pyi
