@@ -33,7 +33,7 @@ classifiers = [
     "Topic :: System :: Operating System",
     "Typing :: Typed"
 ]
-license = {text = "BSD-3-Clause"}
+license = "BSD-3-Clause"
 requires-python = ">=3.8"
 dependencies = []
 
