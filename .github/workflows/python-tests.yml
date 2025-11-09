@@ -50,7 +50,8 @@ jobs:
 
       - name: Fix for Linux
         env:
-          CIBW_BUILD: "cp38-* cp39-* cp310-* pp38-* pp39-*"
+          CIBW_BUILD: "cp38-* cp39-* pp38-*"
+          CIBW_ENABLE_PYPY: true
         if: runner.os == 'Linux'
         run: |
           # note default output dir after repair: wheelhouse
