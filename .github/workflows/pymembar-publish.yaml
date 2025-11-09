@@ -24,7 +24,7 @@ jobs:
         with:
           output-dir: dist
         env:
-          CIBW_TEST_COMMAND_LINUX: "python -m unittest discover -s {project}/tests -p 'test_*.py' -v"
+          CIBW_TEST_COMMAND_LINUX: "ls -lah {project}/dist && python -m unittest discover -s {project}/tests -p 'test_*.py' -v"
           CIBW_TEST_COMMAND_MACOS: "python -m unittest discover -s {project}/tests -p 'test_*.py' -v"
           CIBW_TEST_COMMAND_WINDOWS: "python -m unittest discover -s {project}\\tests -p test_*.py -v"
 
