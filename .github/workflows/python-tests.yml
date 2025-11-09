@@ -49,6 +49,8 @@ jobs:
           python -m build --wheel
 
       - name: Fix for Linux
+        env:
+          CIBW_BUILD: "cp38-* cp39-* cp310-* pp38-* pp39-*"
         if: runner.os == 'Linux'
         run: |
           # note default output dir after repair: wheelhouse
