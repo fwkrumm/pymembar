@@ -33,7 +33,6 @@ classifiers = [
     "Topic :: System :: Operating System",
     "Typing :: Typed"
 ]
-license = {file = "LICENSE.txt"}
 requires-python = ">=3.8"
 dependencies = []
 
