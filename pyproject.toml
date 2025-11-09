@@ -31,17 +31,17 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: System :: Hardware",
     "Topic :: System :: Operating System",
-    "Typing :: Typed",
-    "License :: OSI Approved :: BSD License"
+    "Typing :: Typed"
 ]
+license = {text = "BSD-3-Clause"}
 requires-python = ">=3.8"
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/fwkrumm/memory_barrier_test"
-Repository = "https://github.com/fwkrumm/memory_barrier_test"
-Issues = "https://github.com/fwkrumm/memory_barrier_test/issues"
-Documentation = "https://github.com/fwkrumm/memory_barrier_test/blob/main/readme.md"
+Homepage = "https://github.com/fwkrumm/pymembar"
+Repository = "https://github.com/fwkrumm/pymembar"
+Issues = "https://github.com/fwkrumm/pymembar/issues"
+Documentation = "https://github.com/fwkrumm/pymembar/blob/main/readme.md"
 
 # No additional dependencies needed - uses Python's built-in unittest
 # [project.optional-dependencies]
