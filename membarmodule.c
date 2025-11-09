@@ -3,17 +3,17 @@
 #include <Python.h>
 #include "membar.h"
 
-static PyObject* py_membar_wmb(PyObject* self) {
+static PyObject* py_membar_wmb(PyObject* self, PyObject* args) {
     membar_wmb();
     Py_RETURN_NONE;
 }
 
-static PyObject* py_membar_rmb(PyObject* self) {
+static PyObject* py_membar_rmb(PyObject* self, PyObject* args) {
     membar_rmb();
     Py_RETURN_NONE;
 }
 
-static PyObject* py_membar_fence(PyObject* self) {
+static PyObject* py_membar_fence(PyObject* self, PyObject* args) {
     membar_fence();
     Py_RETURN_NONE;
 }
