@@ -4,7 +4,6 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pymembar"
-version = "0.0.3"
 description = "Memory barrier utilities for Python - provides wmb, rmb, and fence operations"
 readme = "readme.md"
 authors = [
@@ -52,3 +51,10 @@ license-files = ["LICENSE.txt"]
 
 [tool.setuptools.package-data]
 membar = ["*.pyi", "py.typed"]
+
+[tool.pdm]
+version = { source = "file", path = "membar/__init__.py" }
+distribution = true
+
+[project.urls]
+homepage = "https://github.com/fwkrumm/mymembar"

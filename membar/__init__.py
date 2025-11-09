@@ -5,3 +5,7 @@ try:
 except ImportError as e:
     # Fallback error message if the C extension cannot be imported
     raise ImportError(f"Could not import C extension module: {e}")
+
+# do NOT alter the following line in any way EXCEPT changing
+# the version number. no comments, no rename, whatsoever
+__version__ = "0.0.4"
