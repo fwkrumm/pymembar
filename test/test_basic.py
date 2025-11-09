@@ -7,9 +7,6 @@ import unittest
 import sys
 import os
 
-# Add the build directory to path for testing
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'build', 'lib.win-amd64-cpython-311'))
-
 try:
     import membar
 except ImportError as e:

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pymembar"
-version = "0.0.1"
+version = "0.0.2"
 description = "Memory barrier utilities for Python - provides wmb, rmb, and fence operations"
 readme = "readme.md"
 authors = [
