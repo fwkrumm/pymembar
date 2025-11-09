@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: [3.9.*, 3.10.*, 3.11.*, 3.12.*, 3.13.*, 3.x]
+        python-version: [3.8.*, 3.9.*, 3.10.*, 3.11.*, 3.12.*, 3.13.*, 3.x]
     steps:
       - uses: actions/checkout@v4
       - name: Python unit testing
@@ -45,19 +45,21 @@ jobs:
           python -m pip install build setuptools wheel twine cibuildwheel
 
       - name: Build C extension
+        if: runner.os == 'Windows' || runner.os == 'macOS'
         run: |
           python -m build --wheel
 
       - name: Build wheels
         if: runner.os == 'Linux'
-        uses: pypa/cibuildwheel@v2.16.5
+        uses: pypa/cibuildwheel@v3.2.1
         with:
-          output-dir: wheelhouse
+          output-dir: dist
           
       - name: Publish to Test PyPI
-        if: false
+        if: runner.os == 'Linux'
         run: |
-          twine --repository testpypi upload dist/* || { echo "::error:: ❌ Error: Upload failed. Possibly because the version already exists."; exit 1; }
+          ls dist/*
+          # twine --repository testpypi upload dist/* || { echo "::error:: ❌ Error: Upload failed. Possibly because the version already exists."; exit 1; }
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TEST_API_TOKEN_ENV }}
