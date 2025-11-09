@@ -49,6 +49,7 @@ Documentation = "https://github.com/fwkrumm/pymembar/blob/main/readme.md"
 [tool.setuptools]
 packages = ["membar"]
 include-package-data = true
+license-files = ["LICENSE.txt"]
 
 [tool.setuptools.package-data]
 membar = ["*.pyi", "py.typed"]
