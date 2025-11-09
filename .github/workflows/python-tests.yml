@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   Build:
-
+    environment: python-tests
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
