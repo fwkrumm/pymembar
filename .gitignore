@@ -11,6 +11,3 @@ bin/*
 *.json
 *.bak
 __pycache__
-
-# generated
-__init__.pyi
