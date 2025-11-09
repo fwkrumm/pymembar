@@ -7,7 +7,6 @@ name = "membar"
 version = "1.0.0"
 description = "Memory barrier utilities for Python - provides wmb, rmb, and fence operations"
 readme = "readme.md"
-license = "MIT"
 authors = [
     {name = "fwkrumm", email = "fwkrumm@github.com"}
 ]
@@ -33,6 +32,7 @@ classifiers = [
     "Topic :: System :: Hardware",
     "Topic :: System :: Operating System",
     "Typing :: Typed",
+    "License :: OSI Approved :: BSD License"
 ]
 requires-python = ">=3.8"
 dependencies = []
