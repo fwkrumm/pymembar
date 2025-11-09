@@ -46,7 +46,7 @@ jobs:
 
       - name: Build C extension
         run: |
-          python -m build --wheel --outdir wheel
+          python -m build --wheel
 
       - name: Fix for Linux
         if: runner.os == 'Linux'
