@@ -21,7 +21,6 @@ setup(
     version=get_version(),
     description="Python bindings for memory barriers",
     packages=find_packages(),
-    py_modules=["membar"],
     package_data={"membar": ["__init__.pyi"]},
     include_package_data=True,
     ext_modules=[membar_module],
