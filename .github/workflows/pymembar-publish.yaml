@@ -26,10 +26,10 @@ jobs:
           
       - name: Publish to Test PyPI
         run: |
-          pip install --upgrade pip
-          pip install twine
-          pip install -U packaging
-          twine upload --repository testpypi dist/*.whl --verbose || { echo "::error:: ❌ Error: Upload failed. Possibly because the version already exists."; exit 1; }
+          python -m pip install --upgrade pip
+          python -m pip install twine
+          python -m pip install -U packaging
+          python -m twine upload --repository testpypi dist/*.whl --verbose || { echo "::error:: ❌ Error: Upload failed. Possibly because the version already exists."; exit 1; }
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TEST_API_TOKEN_ENV }}
