@@ -1,0 +1,13 @@
+build/*
+*/build/*
+dist/*
+module/*
+out/*
+wheel/*
+wheelhouse/*
+pymembar.egg-info/*
+lib/*
+bin/*
+*.json
+*.bak
+__pycache__
