@@ -10,7 +10,7 @@ try:
     import membar
 except ImportError as e:
     print(f"Failed to import membar module: {e}")
-    print("Make sure to build and install the module first; cf. readme.md.")
+    print("Make sure to build and install the module first; cf. README.md.")
     sys.exit(1)
 
 

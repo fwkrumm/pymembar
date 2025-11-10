@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "pymembar"
 dynamic = ["version"]
 description = "Memory barrier utilities for Python - provides wmb, rmb, and fence operations"
-readme = "readme.md"
+readme = "README.md"
 authors = [
     {name = "fwkrumm", email = "fwkrumm@github.com"}
 ]
@@ -40,7 +40,7 @@ dependencies = []
 Homepage = "https://github.com/fwkrumm/pymembar"
 Repository = "https://github.com/fwkrumm/pymembar"
 Issues = "https://github.com/fwkrumm/pymembar/issues"
-Documentation = "https://github.com/fwkrumm/pymembar/blob/main/readme.md"
+Documentation = "https://github.com/fwkrumm/pymembar/blob/master/README.md"
 
 # No additional dependencies needed - uses Python's built-in unittest
 # [project.optional-dependencies]
