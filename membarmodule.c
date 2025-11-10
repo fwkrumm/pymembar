@@ -27,12 +27,12 @@ static PyMethodDef MembarMethods[] = {
 
 static struct PyModuleDef membarmodule = {
     PyModuleDef_HEAD_INIT,
-    "_membar",     							// module name should match the extension name
-    "Memory barrier utilities for Python",  // module docstring
-    -1,       						        // size of per-interpreter state or -1
+    "_membar",                                 // module name should match the extension name
+    "Memory barrier utilities for Python",     // module docstring
+    -1,                                        // size of per-interpreter state or -1
     MembarMethods
 };
 
-PyMODINIT_FUNC PyInit__membar(void) {  		// function name must match extension name
+PyMODINIT_FUNC PyInit__membar(void) {          // function name must match extension name
     return PyModule_Create(&membarmodule);
 }
