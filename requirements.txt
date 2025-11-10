@@ -1,6 +1,0 @@
-build
-setuptools
-wheel
-twine
-pylint
-black
