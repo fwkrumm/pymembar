@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pymembar"
+dynamic = ["version"]
+description = "Memory barrier utilities for Python - provides wmb, rmb, and fence operations"
+readme = "README.md"
+authors = [
+    {name = "fwkrumm", email = "fwkrumm@github.com"}
+]
+maintainers = [
+    {name = "fwkrumm", email = "fwkrumm@github.com"}
+]
+keywords = ["memory-barriers", "concurrency", "low-level", "synchronization", "threading"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: C",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Hardware",
+    "Topic :: System :: Operating System",
+    "Typing :: Typed"
+]
+requires-python = ">=3.8"
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/fwkrumm/pymembar"
+Repository = "https://github.com/fwkrumm/pymembar"
+Issues = "https://github.com/fwkrumm/pymembar/issues"
+Documentation = "https://github.com/fwkrumm/pymembar/blob/master/README.md"
+
+# No additional dependencies needed - uses Python's built-in unittest
+# [project.optional-dependencies]
+
+[tool.setuptools]
+packages = ["membar"]
+include-package-data = true
+license-files = ["LICENSE.txt"]
+
+[tool.setuptools.package-data]
+membar = ["*.pyi", "py.typed"]
+
+[tool.pdm]
+version = { source = "file", path = "membar/__init__.py" }
+distribution = true
