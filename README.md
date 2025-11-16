@@ -23,6 +23,8 @@ pip install pymembar
 
 ## Usage
 
+### Basic Usage
+
 ```python
 import membar
 
@@ -37,6 +39,36 @@ membar.rmb()
 # Full memory fence - ensures all memory operations before this point
 # are visible to other processes/threads before any operations after this point
 membar.fence()
+```
+
+### Logging Support
+
+You can enable optional logging to see which memory barrier implementation is being used at runtime. This is useful for debugging and understanding which underlying mechanism (C11 atomics, MSVC, GNU atomics, BSD, or compiler barrier) is executing on your platform.
+
+```python
+import membar
+
+# Enable logging with a custom callback
+def my_logger(message):
+    print(f"[MEMBAR] {message}")
+
+membar.set_log_callback(my_logger)
+
+# Now all barrier calls will log their implementation
+membar.wmb()   # Logs: "wmb: using C11 atomic_thread_fence(memory_order_release)"
+membar.fence() # Logs: "fence: using C11 atomic_thread_fence(memory_order_seq_cst)"
+
+# You can also use print directly
+membar.set_log_callback(print)
+
+# Or integrate with Python's logging module
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+membar.set_log_callback(logger.info)
+
+# Disable logging by passing None
+membar.set_log_callback(None)
 ```
 
 ## When Are Memory Barriers Needed?
