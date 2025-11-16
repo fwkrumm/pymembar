@@ -1,6 +1,7 @@
 """
 Type stubs for membar module - Memory barrier utilities for Python
 """
+from typing import Optional, Callable
 
 def wmb() -> None:
     """
@@ -31,7 +32,7 @@ def fence() -> None:
 
 def set_log_callback(callback: Optional[Callable[[str], None]]) -> None:
     """
-    set optional logging callback.
+    Set optional logging callback.
 
     Args:
         callback: A callable that takes a string message, or None to disable logging.
@@ -47,7 +48,8 @@ def set_log_callback(callback: Optional[Callable[[str], None]]) -> None:
     Or use a custom logger:
         >>> import logging
         >>> logger = logging.getLogger("membar_logger")
-        >>> membar.set_log_callback(logger.info)        # logging level set callback type
+        >>> membar.set_log_callback(logger.info)        # use logger.X as the callback
+                                                        #   for logging at X level
         >>> membar.rmb()                                # logs via the logger
         >>> membar.set_log_callback(None)               # disable logging
     """
