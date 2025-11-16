@@ -66,4 +66,3 @@ Parts of the core code, this README, and documentation strings were generated wi
 
 # TODOs
 - Is it possible to write tests for the functionality
-- Add ARM build to CI/CD pipeline as soon as they are available via GitHub Actions
