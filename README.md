@@ -2,7 +2,7 @@
 
 Memory barrier utilities for Python - provides low-level memory ordering primitives for concurrent programming. Usually you would not need this in Python due to GIL and generally strong memory ordering on x86/x86_64. However, on weakly-ordered architectures like ARM, memory barriers can be useful for ensuring correct visibility and ordering of memory operations when for example working with shared memory, named semaphores, or lock-free data structures.
 
-I used AI (GitHub Copilot) to help generate parts of this README, documentation strings, and some configuration files. Please report any inaccuracies or errors you may find.
+I used AI (GitHub Copilot) to help generate parts of this README, documentation strings, parts of the core code, the tests, and some configuration files. Please report any inaccuracies or errors you may find.
 
 
 ## Overview
@@ -61,8 +61,14 @@ I am not a C expert and would be happy to receive any constructive feedback, sug
 
 ## Disclaimer
 
-Parts of the core code, this README, and documentation strings were generated with AI assistance.
+Parts of the core code, the tests, this README, and documentation strings were generated with AI assistance.
+
+## Release history
+
+- 0.0.1 - Initial release
+- 0.0.2 - Added arm build support
+- 0.0.3 - Added logging support
 
 
-# TODOs
-- Is it possible to write tests for the functionality
+## TODOs
+- Is it possible to write tests for the memory barrier core functionality?
