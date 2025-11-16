@@ -2,18 +2,29 @@
 #include "membar.h"
 #include <stddef.h>
 
-/* optional logging callback */
-static membar_log_callback log_callback = NULL;
-
-void membar_set_log_callback(membar_log_callback callback) {
-    log_callback = callback;
-}
-
 /* prefer c11 atomics if available */
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L) && !defined(__STDC_NO_ATOMICS__)
   #include <stdatomic.h>
   #define HAS_C11_ATOMICS 1
 #endif
+
+/* optional logging callback - protected with atomic operations for thread safety */
+#if defined(HAS_C11_ATOMICS)
+  static _Atomic(membar_log_callback) log_callback = NULL;
+#else
+  static membar_log_callback log_callback = NULL;
+  #warning "Thread-safe callback storage not available - race conditions possible with set_log_callback if used in multithreaded context"
+#endif
+
+void membar_set_log_callback(membar_log_callback callback) {
+#if defined(HAS_C11_ATOMICS)
+    // Use atomic store with release semantics for thread safety
+    atomic_store_explicit(&log_callback, callback, memory_order_release);
+#else
+    // Fallback: non-atomic assignment (not thread-safe)
+    log_callback = callback;
+#endif
+}
 
 /* msvc support */
 #if defined(_MSC_VER)
@@ -35,14 +46,16 @@ void membar_set_log_callback(membar_log_callback callback) {
  * write memory barrier
  * ensures that all memory writes issued before this call are visible before any subsequent writes
  * used to enforce ordering in concurrent systems where write reordering may occur
- * 
+ *
  * NOTE: If logging is enabled, there is a performance overhead from the callback check
  * and string formatting. Logging should primarily be used for debugging, not in
  * performance-critical production code.
  */
 void membar_wmb(void) {
 #if defined(HAS_C11_ATOMICS)
-    if (log_callback) log_callback("wmb: using C11 atomic_thread_fence(memory_order_release)");
+    // Use atomic load with acquire semantics for thread-safe callback access
+    membar_log_callback cb = atomic_load_explicit(&log_callback, memory_order_acquire);
+    if (cb) cb("wmb: using C11 atomic_thread_fence(memory_order_release)");
     atomic_thread_fence(memory_order_release);
 #elif defined(HAS_MSVC)
     if (log_callback) log_callback("wmb: using MSVC MemoryBarrier()");
@@ -63,14 +76,16 @@ void membar_wmb(void) {
  * read memory barrier
  * ensures that all memory reads issued before this call are completed before any subsequent reads
  * used to prevent speculative reads from violating program correctness
- * 
+ *
  * NOTE: If logging is enabled, there is a performance overhead from the callback check
  * and string formatting. Logging should primarily be used for debugging, not in
  * performance-critical production code.
  */
 void membar_rmb(void) {
 #if defined(HAS_C11_ATOMICS)
-    if (log_callback) log_callback("rmb: using C11 atomic_thread_fence(memory_order_acquire)");
+    // Use atomic load with acquire semantics for thread-safe callback access
+    membar_log_callback cb = atomic_load_explicit(&log_callback, memory_order_acquire);
+    if (cb) cb("rmb: using C11 atomic_thread_fence(memory_order_acquire)");
     atomic_thread_fence(memory_order_acquire);
 #elif defined(HAS_MSVC)
     if (log_callback) log_callback("rmb: using MSVC MemoryBarrier()");
@@ -91,14 +106,16 @@ void membar_rmb(void) {
  * full fence (read and write)
  * provides sequential consistency by ensuring all memory operations before this call are completed
  * before any that follow; used to enforce strict ordering across threads
- * 
+ *
  * NOTE: If logging is enabled, there is a performance overhead from the callback check
  * and string formatting. Logging should primarily be used for debugging, not in
  * performance-critical production code.
  */
 void membar_fence(void) {
 #if defined(HAS_C11_ATOMICS)
-    if (log_callback) log_callback("fence: using C11 atomic_thread_fence(memory_order_seq_cst)");
+    // Use atomic load with acquire semantics for thread-safe callback access
+    membar_log_callback cb = atomic_load_explicit(&log_callback, memory_order_acquire);
+    if (cb) cb("fence: using C11 atomic_thread_fence(memory_order_seq_cst)");
     atomic_thread_fence(memory_order_seq_cst);
 #elif defined(HAS_MSVC)
     if (log_callback) log_callback("fence: using MSVC MemoryBarrier()");
