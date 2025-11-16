@@ -48,17 +48,25 @@ static PyObject* python_log_callback = NULL;
 /**
  * C callback wrapper that invokes the Python logging callback
  * This function is called from C code and bridges to Python
+ * Acquires the GIL before calling Python code for thread safety
  *
  * @param message - the log message string to pass to Python callback
  */
 static void log_callback_wrapper(const char* message) {
     if (python_log_callback != NULL) {
+        // Acquire the GIL before calling into Python from C code
+        // This is critical for thread safety when called from barrier functions
+        PyGILState_STATE gstate = PyGILState_Ensure();
+
         PyObject* result = PyObject_CallFunction(python_log_callback, "s", message);
         if (result == NULL) {
             PyErr_Clear();  // do not let logging errors propagate
         } else {
             Py_DECREF(result);
         }
+
+        // Release the GIL after Python code completes
+        PyGILState_Release(gstate);
     }
 }
 
