@@ -2,6 +2,8 @@
 #include "membar.h"
 #include <stddef.h>
 
+
+
 /* prefer c11 atomics if available */
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L) && !defined(__STDC_NO_ATOMICS__)
   #include <stdatomic.h>
@@ -13,7 +15,9 @@
   static _Atomic(membar_log_callback) log_callback = NULL;
 #else
   static membar_log_callback log_callback = NULL;
-  #warning "Thread-safe callback storage not available - race conditions possible with set_log_callback if used in multithreaded context"
+  #error "Thread-safe callback storage not available - race conditions possible "
+    "with set_log_callback if used in multithreaded context. Disable this error in "
+    "case you want to compile anyway."
 #endif
 
 void membar_set_log_callback(membar_log_callback callback) {
