@@ -45,6 +45,8 @@ membar.fence()
 
 You can enable optional logging to see which memory barrier implementation is being used at runtime. This is useful for debugging and understanding which underlying mechanism (C11 atomics, MSVC, GNU atomics, BSD, or compiler barrier) is executing on your platform.
 
+**⚠️ Performance Warning:** Enabling logging adds overhead to every memory barrier call (callback check and string formatting). This can significantly impact performance in tight loops or performance-critical code paths. Logging should primarily be used for debugging and development, and should be disabled (`set_log_callback(None)`) in production code where performance is critical.
+
 ```python
 import membar
 

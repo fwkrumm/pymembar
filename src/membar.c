@@ -35,6 +35,10 @@ void membar_set_log_callback(membar_log_callback callback) {
  * write memory barrier
  * ensures that all memory writes issued before this call are visible before any subsequent writes
  * used to enforce ordering in concurrent systems where write reordering may occur
+ * 
+ * NOTE: If logging is enabled, there is a performance overhead from the callback check
+ * and string formatting. Logging should primarily be used for debugging, not in
+ * performance-critical production code.
  */
 void membar_wmb(void) {
 #if defined(HAS_C11_ATOMICS)
@@ -59,6 +63,10 @@ void membar_wmb(void) {
  * read memory barrier
  * ensures that all memory reads issued before this call are completed before any subsequent reads
  * used to prevent speculative reads from violating program correctness
+ * 
+ * NOTE: If logging is enabled, there is a performance overhead from the callback check
+ * and string formatting. Logging should primarily be used for debugging, not in
+ * performance-critical production code.
  */
 void membar_rmb(void) {
 #if defined(HAS_C11_ATOMICS)
@@ -83,6 +91,10 @@ void membar_rmb(void) {
  * full fence (read and write)
  * provides sequential consistency by ensuring all memory operations before this call are completed
  * before any that follow; used to enforce strict ordering across threads
+ * 
+ * NOTE: If logging is enabled, there is a performance overhead from the callback check
+ * and string formatting. Logging should primarily be used for debugging, not in
+ * performance-critical production code.
  */
 void membar_fence(void) {
 #if defined(HAS_C11_ATOMICS)
