@@ -48,8 +48,7 @@ def set_log_callback(callback: Optional[Callable[[str], None]]) -> None:
     Or use a custom logger:
         >>> import logging
         >>> logger = logging.getLogger("membar_logger")
-        >>> membar.set_log_callback(logger.info)        # use logger.X as the callback
-                                                        #   where X can be info, debug, warning, etc., to log at the corresponding level
+        >>> membar.set_log_callback(logger.info)  # Use logger.info (can also use .debug, .warning, etc.)
         >>> membar.rmb()                                # logs via the logger
         >>> membar.set_log_callback(None)               # disable logging
     """
