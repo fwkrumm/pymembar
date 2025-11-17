@@ -179,6 +179,12 @@ static PyMethodDef MembarMethods[] = {
  * unregistering.
  */
 static void membar_module_free(void* m) {
+    // Check if initialization succeeded - if not, nothing to clean up
+    // This prevents undefined behavior if PyInit__membar failed
+    if (!lock_initialized) {
+        return;
+    }
+
     // STEP 1: Unregister C callback to stop new barrier functions from invoking wrapper
     // This is atomic at the C level (see src/membar.c) so it's safe to call outside mutex
     membar_set_log_callback(NULL);
