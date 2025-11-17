@@ -104,6 +104,11 @@ static void log_callback_wrapper(const char* message) {
  * Sets or clears the logging callback function
  * Protected by mutex to prevent race conditions in reference counting
  *
+ * GIL SAFETY: This function is called from Python with the GIL already held (guaranteed
+ * for all Python C API functions). All Py_INCREF/Py_XDECREF operations are safe because
+ * they execute while the GIL is held. The mutex only protects against concurrent calls
+ * to this setter function, not GIL-protected operations.
+ *
  * @param self - module instance (unused)
  * @param args - Python arguments tuple containing the callback function or None
  * @return Py_None on success, NULL on error
@@ -111,6 +116,8 @@ static void log_callback_wrapper(const char* message) {
 static PyObject* py_membar_set_log_callback(PyObject* self, PyObject* args) {
     PyObject* callback;
     PyObject* old_callback;
+
+    // GIL is held throughout this function (Python C API guarantee)
 
     // PyArg_ParseTuple: extract Python arguments into C variables
     // "O" format = accept any Python object
@@ -130,7 +137,8 @@ static PyObject* py_membar_set_log_callback(PyObject* self, PyObject* args) {
         return NULL;  // returning NULL signals an exception occurred
     }
 
-    // Acquire mutex to protect reference counting operations
+    // Acquire mutex to protect concurrent access to python_log_callback
+    // Note: GIL is still held, so all Python C API calls remain safe
 #ifdef _WIN32
     EnterCriticalSection(&callback_lock);
 #else
@@ -138,11 +146,12 @@ static PyObject* py_membar_set_log_callback(PyObject* self, PyObject* args) {
 #endif
 
     // atomically swap callbacks and manage reference counting
+    // Py_INCREF is safe here because GIL is held (required for all refcount operations)
     old_callback = python_log_callback;
     python_log_callback = callback;
 
     if (callback != NULL) {
-        Py_INCREF(callback);  // increase ref count so Python won't GC it
+        Py_INCREF(callback);  // increase ref count so Python won't GC it (GIL held)
     }
 
 #ifdef _WIN32
@@ -151,7 +160,7 @@ static PyObject* py_membar_set_log_callback(PyObject* self, PyObject* args) {
     pthread_mutex_unlock(&callback_lock);
 #endif
 
-    // Py_XDECREF: safely decrease reference count of old callback outside mutex
+    // Py_XDECREF: safely decrease reference count of old callback (GIL still held)
     // (X variant is safe even if old_callback is NULL)
     Py_XDECREF(old_callback);
 

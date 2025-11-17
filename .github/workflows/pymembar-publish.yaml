@@ -1,7 +1,8 @@
 name: CI_pymembar
 
 # TODO change to tag
-on: [push, pull_request]
+#on: [push, pull_request]
+on: [push]
 
 # limit TOKEN permissions
 permissions:
