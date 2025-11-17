@@ -9,7 +9,8 @@ static CRITICAL_SECTION callback_lock;
 static int lock_initialized = 0;
 #else
 #include <pthread.h>
-static pthread_mutex_t callback_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t callback_lock;
+static int lock_initialized = 0;
 #endif
 
 /**
@@ -191,13 +192,13 @@ static void membar_module_free(void* m) {
 
     membar_set_log_callback(NULL);
 
-    // Destroy the mutex
+    // Destroy the mutex and mark as uninitialized
 #ifdef _WIN32
     DeleteCriticalSection(&callback_lock);
-    lock_initialized = 0;
 #else
     pthread_mutex_destroy(&callback_lock);
 #endif
+    lock_initialized = 0;
 }
 
 static struct PyModuleDef membarmodule = {
@@ -220,13 +221,15 @@ static struct PyModuleDef membarmodule = {
  * @return PyObject* - the initialized module object
  */
 PyMODINIT_FUNC PyInit__membar(void) {          // function name must match extension name
-#ifdef _WIN32
+    // Initialize the mutex on first import (or after module reload)
     if (!lock_initialized) {
+#ifdef _WIN32
         InitializeCriticalSection(&callback_lock);
+#else
+        pthread_mutex_init(&callback_lock, NULL);
+#endif
         lock_initialized = 1;
     }
-#endif
-    // pthread mutex is statically initialized with PTHREAD_MUTEX_INITIALIZER
 
     return PyModule_Create(&membarmodule);
 }
