@@ -161,29 +161,17 @@ void membar_wmb(void) {
         "wmb: using C11 atomic_thread_fence(memory_order_release)"
     );
 #elif defined(HAS_MSVC)
-    #if defined(HAS_MSVC_ATOMICS)
-        MEMBAR_WITH_LOG_MSVC(
-            MemoryBarrier(),
-            "wmb: using MSVC MemoryBarrier()"
-        );
-    #else
-        MEMBAR_WITH_LOG_SIMPLE(
-            MemoryBarrier(),
-            "wmb: using MSVC MemoryBarrier()"
-        );
-    #endif
+    /* HAS_MSVC_ATOMICS is always defined here (see lines 28-31) since C11 was already handled */
+    MEMBAR_WITH_LOG_MSVC(
+        MemoryBarrier(),
+        "wmb: using MSVC MemoryBarrier()"
+    );
 #elif defined(HAS_GNU_ATOMICS)
-    #if defined(HAS_GNU_ATOMIC_BUILTINS)
-        MEMBAR_WITH_LOG_GNU(
-            __atomic_thread_fence(__ATOMIC_RELEASE),
-            "wmb: using GNU __atomic_thread_fence(__ATOMIC_RELEASE)"
-        );
-    #else
-        MEMBAR_WITH_LOG_SIMPLE(
-            __atomic_thread_fence(__ATOMIC_RELEASE),
-            "wmb: using GNU __atomic_thread_fence(__ATOMIC_RELEASE)"
-        );
-    #endif
+    /* HAS_GNU_ATOMIC_BUILTINS is always defined here (see lines 39-42) since C11 was already handled */
+    MEMBAR_WITH_LOG_GNU(
+        __atomic_thread_fence(__ATOMIC_RELEASE),
+        "wmb: using GNU __atomic_thread_fence(__ATOMIC_RELEASE)"
+    );
 #elif defined(HAS_BSD_FALLBACK)
     MEMBAR_WITH_LOG_SIMPLE(
         __asm__ __volatile__("" ::: "memory"),
@@ -213,29 +201,17 @@ void membar_rmb(void) {
         "rmb: using C11 atomic_thread_fence(memory_order_acquire)"
     );
 #elif defined(HAS_MSVC)
-    #if defined(HAS_MSVC_ATOMICS)
-        MEMBAR_WITH_LOG_MSVC(
-            MemoryBarrier(),
-            "rmb: using MSVC MemoryBarrier()"
-        );
-    #else
-        MEMBAR_WITH_LOG_SIMPLE(
-            MemoryBarrier(),
-            "rmb: using MSVC MemoryBarrier()"
-        );
-    #endif
+    /* HAS_MSVC_ATOMICS is always defined here since C11 was already handled */
+    MEMBAR_WITH_LOG_MSVC(
+        MemoryBarrier(),
+        "rmb: using MSVC MemoryBarrier()"
+    );
 #elif defined(HAS_GNU_ATOMICS)
-    #if defined(HAS_GNU_ATOMIC_BUILTINS)
-        MEMBAR_WITH_LOG_GNU(
-            __atomic_thread_fence(__ATOMIC_ACQUIRE),
-            "rmb: using GNU __atomic_thread_fence(__ATOMIC_ACQUIRE)"
-        );
-    #else
-        MEMBAR_WITH_LOG_SIMPLE(
-            __atomic_thread_fence(__ATOMIC_ACQUIRE),
-            "rmb: using GNU __atomic_thread_fence(__ATOMIC_ACQUIRE)"
-        );
-    #endif
+    /* HAS_GNU_ATOMIC_BUILTINS is always defined here since C11 was already handled */
+    MEMBAR_WITH_LOG_GNU(
+        __atomic_thread_fence(__ATOMIC_ACQUIRE),
+        "rmb: using GNU __atomic_thread_fence(__ATOMIC_ACQUIRE)"
+    );
 #elif defined(HAS_BSD_FALLBACK)
     MEMBAR_WITH_LOG_SIMPLE(
         __asm__ __volatile__("" ::: "memory"),
@@ -265,29 +241,17 @@ void membar_fence(void) {
         "fence: using C11 atomic_thread_fence(memory_order_seq_cst)"
     );
 #elif defined(HAS_MSVC)
-    #if defined(HAS_MSVC_ATOMICS)
-        MEMBAR_WITH_LOG_MSVC(
-            MemoryBarrier(),
-            "fence: using MSVC MemoryBarrier()"
-        );
-    #else
-        MEMBAR_WITH_LOG_SIMPLE(
-            MemoryBarrier(),
-            "fence: using MSVC MemoryBarrier()"
-        );
-    #endif
+    /* HAS_MSVC_ATOMICS is always defined here since C11 was already handled */
+    MEMBAR_WITH_LOG_MSVC(
+        MemoryBarrier(),
+        "fence: using MSVC MemoryBarrier()"
+    );
 #elif defined(HAS_GNU_ATOMICS)
-    #if defined(HAS_GNU_ATOMIC_BUILTINS)
-        MEMBAR_WITH_LOG_GNU(
-            __atomic_thread_fence(__ATOMIC_SEQ_CST),
-            "fence: using GNU __atomic_thread_fence(__ATOMIC_SEQ_CST)"
-        );
-    #else
-        MEMBAR_WITH_LOG_SIMPLE(
-            __atomic_thread_fence(__ATOMIC_SEQ_CST),
-            "fence: using GNU __atomic_thread_fence(__ATOMIC_SEQ_CST)"
-        );
-    #endif
+    /* HAS_GNU_ATOMIC_BUILTINS is always defined here since C11 was already handled */
+    MEMBAR_WITH_LOG_GNU(
+        __atomic_thread_fence(__ATOMIC_SEQ_CST),
+        "fence: using GNU __atomic_thread_fence(__ATOMIC_SEQ_CST)"
+    );
 #elif defined(HAS_BSD_FALLBACK)
     MEMBAR_WITH_LOG_SIMPLE(
         __asm__ __volatile__("" ::: "memory"),
