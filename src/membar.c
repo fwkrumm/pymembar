@@ -117,10 +117,15 @@ void membar_set_log_callback(membar_log_callback callback) {
     } while(0)
 #endif
 
-/* MSVC atomics: Load callback with compare-exchange, execute barrier BEFORE logging */
+/* MSVC atomics: Load callback with proper atomic read, execute barrier BEFORE logging */
 #if defined(HAS_MSVC_ATOMICS)
   #define MEMBAR_WITH_LOG_MSVC(barrier_call, log_msg) \
     do { \
+        /* Use _InterlockedCompareExchangePointer with NULL to perform atomic read \
+         * MSVC doesn't provide a dedicated atomic load intrinsic, so we use \
+         * compare-exchange(NULL, NULL) which effectively performs an atomic read \
+         * without modifying the value. While semantically a compare-exchange, \
+         * this is the recommended MSVC pattern for atomic pointer reads. */ \
         membar_log_callback cb = (membar_log_callback)_InterlockedCompareExchangePointer( \
             (void* volatile*)&log_callback, NULL, NULL); \
         barrier_call; \
