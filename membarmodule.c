@@ -172,9 +172,20 @@ static PyMethodDef MembarMethods[] = {
 /**
  * Module cleanup function
  * Called when the module is being unloaded
+ *
+ * CRITICAL: Unregister the C callback FIRST to ensure no new calls to log_callback_wrapper
+ * can start after this point. Any in-flight callbacks will complete safely because they
+ * hold a reference to the callback object and we don't destroy the mutex until after
+ * unregistering.
  */
 static void membar_module_free(void* m) {
-    // Clean up the callback
+    // STEP 1: Unregister C callback to stop new barrier functions from invoking wrapper
+    // This is atomic at the C level (see src/membar.c) so it's safe to call outside mutex
+    membar_set_log_callback(NULL);
+
+    // STEP 2: Acquire mutex and clean up Python callback reference
+    // Any in-flight log_callback_wrapper calls will complete because they already
+    // have their snapshot and reference count
 #ifdef _WIN32
     EnterCriticalSection(&callback_lock);
 #else
@@ -190,9 +201,7 @@ static void membar_module_free(void* m) {
     pthread_mutex_unlock(&callback_lock);
 #endif
 
-    membar_set_log_callback(NULL);
-
-    // Destroy the mutex and mark as uninitialized
+    // STEP 3: Now safe to destroy mutex - no more wrapper calls can occur
 #ifdef _WIN32
     DeleteCriticalSection(&callback_lock);
 #else
@@ -218,10 +227,17 @@ static struct PyModuleDef membarmodule = {
  * Called when the _membar module is imported in Python
  * Initializes the mutex for thread-safe callback management
  *
+ * THREAD SAFETY NOTE: The lock_initialized check is not itself atomic, but this is safe
+ * because Python's import system holds the import lock (GIL) during module initialization.
+ * PyInit__membar() is never called concurrently from multiple threads - Python guarantees
+ * serialized access during the import process. This means the check-and-initialize pattern
+ * is safe despite not using atomic operations.
+ *
  * @return PyObject* - the initialized module object
  */
 PyMODINIT_FUNC PyInit__membar(void) {          // function name must match extension name
     // Initialize the mutex on first import (or after module reload)
+    // Safe due to Python's import lock protecting this function
     if (!lock_initialized) {
 #ifdef _WIN32
         InitializeCriticalSection(&callback_lock);
