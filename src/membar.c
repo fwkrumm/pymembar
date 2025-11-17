@@ -102,7 +102,9 @@ void membar_set_log_callback(membar_log_callback callback) {
  * Helper macros to reduce code duplication in barrier functions
  * These macros handle the pattern: load callback atomically -> execute barrier FIRST -> then log
  * The barrier MUST execute before logging to ensure memory ordering takes effect
- * before any callback operations that might access memory.
+ * before any callback operations that might access memory. This ensures the memory barrier's
+ * ordering guarantees are in effect before the callback potentially accesses memory protected
+ * by the barrier.
  */
 
 /* C11 atomics: Load callback atomically, execute barrier BEFORE logging */
