@@ -76,7 +76,7 @@ void membar_set_log_callback(membar_log_callback callback) {
 #if defined(HAS_C11_ATOMICS)
     /* C11: Use atomic_store_explicit with release semantics
      * Release ensures all prior writes are visible before the store.
-     * This coordinates with the acquire load in the barrier macros (see line 110)
+     * This coordinates with the acquire load in the barrier macros
      * to form a synchronizes-with relationship, ensuring thread-safe callback updates. */
     atomic_store_explicit(&log_callback, callback, memory_order_release);
 #elif defined(HAS_MSVC_ATOMICS)
@@ -159,7 +159,7 @@ void membar_set_log_callback(membar_log_callback callback) {
  * used to enforce ordering in concurrent systems where write reordering may occur
  *
  * NOTE: If logging is enabled, there is a performance overhead from the callback check
- * and string formatting. Logging should primarily be used for debugging, not in
+ * and callback invocation. Logging should primarily be used for debugging, not in
  * performance-critical production code.
  */
 void membar_wmb(void) {
@@ -199,7 +199,7 @@ void membar_wmb(void) {
  * used to prevent speculative reads from violating program correctness
  *
  * NOTE: If logging is enabled, there is a performance overhead from the callback check
- * and string formatting. Logging should primarily be used for debugging, not in
+ * and callback invocation. Logging should primarily be used for debugging, not in
  * performance-critical production code.
  */
 void membar_rmb(void) {
@@ -239,7 +239,7 @@ void membar_rmb(void) {
  * before any that follow; used to enforce strict ordering across threads
  *
  * NOTE: If logging is enabled, there is a performance overhead from the callback check
- * and string formatting. Logging should primarily be used for debugging, not in
+ * and function call invocation. Logging should primarily be used for debugging, not in
  * performance-critical production code.
  */
 void membar_fence(void) {
