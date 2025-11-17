@@ -96,6 +96,51 @@ void membar_set_log_callback(membar_log_callback callback) {
   #define HAS_BSD_FALLBACK 1
 #endif
 
+/*
+ * Helper macros to reduce code duplication in barrier functions
+ * These macros handle the pattern: load callback atomically -> execute barrier FIRST -> then log
+ * The barrier MUST execute before logging to ensure memory ordering takes effect
+ * before any callback operations that might access memory.
+ */
+
+/* C11 atomics: Load callback atomically, execute barrier BEFORE logging */
+#if defined(HAS_C11_ATOMICS)
+  #define MEMBAR_WITH_LOG_C11(barrier_call, log_msg) \
+    do { \
+        membar_log_callback cb = atomic_load_explicit(&log_callback, memory_order_acquire); \
+        barrier_call; \
+        if (cb) cb(log_msg); \
+    } while(0)
+#endif
+
+/* MSVC atomics: Load callback with compare-exchange, execute barrier BEFORE logging */
+#if defined(HAS_MSVC_ATOMICS)
+  #define MEMBAR_WITH_LOG_MSVC(barrier_call, log_msg) \
+    do { \
+        membar_log_callback cb = (membar_log_callback)_InterlockedCompareExchangePointer( \
+            (void* volatile*)&log_callback, NULL, NULL); \
+        barrier_call; \
+        if (cb) cb(log_msg); \
+    } while(0)
+#endif
+
+/* GCC/Clang atomics: Load callback atomically, execute barrier BEFORE logging */
+#if defined(HAS_GNU_ATOMIC_BUILTINS)
+  #define MEMBAR_WITH_LOG_GNU(barrier_call, log_msg) \
+    do { \
+        membar_log_callback cb = __atomic_load_n(&log_callback, __ATOMIC_ACQUIRE); \
+        barrier_call; \
+        if (cb) cb(log_msg); \
+    } while(0)
+#endif
+
+/* Fallback (no atomic support): Execute barrier BEFORE logging */
+#define MEMBAR_WITH_LOG_SIMPLE(barrier_call, log_msg) \
+  do { \
+      barrier_call; \
+      if (log_callback) log_callback(log_msg); \
+  } while(0)
+
 /**
  * write memory barrier
  * ensures that all memory writes issued before this call are visible before any subsequent writes
@@ -107,48 +152,44 @@ void membar_set_log_callback(membar_log_callback callback) {
  */
 void membar_wmb(void) {
 #if defined(HAS_C11_ATOMICS)
-    /* C11: Atomically load the callback pointer with acquire semantics
-     * Acquire ensures we see the callback and any data it depends on */
-    membar_log_callback cb = atomic_load_explicit(&log_callback, memory_order_acquire);
-    /* Execute the actual write memory barrier BEFORE logging
-     * This ensures the barrier takes effect before any callback memory operations */
-    atomic_thread_fence(memory_order_release);
-    if (cb) cb("wmb: using C11 atomic_thread_fence(memory_order_release)");
+    MEMBAR_WITH_LOG_C11(
+        atomic_thread_fence(memory_order_release),
+        "wmb: using C11 atomic_thread_fence(memory_order_release)"
+    );
 #elif defined(HAS_MSVC)
     #if defined(HAS_MSVC_ATOMICS)
-        /* MSVC: Use compare-exchange with (NULL, NULL) to atomically read the pointer
-         * This is a trick: comparing with NULL and exchanging with NULL reads atomically */
-        membar_log_callback cb = (membar_log_callback)_InterlockedCompareExchangePointer(
-            (void* volatile*)&log_callback, NULL, NULL);
-        /* Execute the actual write memory barrier using Windows API BEFORE logging */
-        MemoryBarrier();
-        if (cb) cb("wmb: using MSVC MemoryBarrier()");
+        MEMBAR_WITH_LOG_MSVC(
+            MemoryBarrier(),
+            "wmb: using MSVC MemoryBarrier()"
+        );
     #else
-        /* Execute the actual write memory barrier using Windows API BEFORE logging */
-        MemoryBarrier();
-        /* Fallback for MSVC without atomic support */
-        if (log_callback) log_callback("wmb: using MSVC MemoryBarrier()");
+        MEMBAR_WITH_LOG_SIMPLE(
+            MemoryBarrier(),
+            "wmb: using MSVC MemoryBarrier()"
+        );
     #endif
 #elif defined(HAS_GNU_ATOMICS)
     #if defined(HAS_GNU_ATOMIC_BUILTINS)
-        /* GCC/Clang: Use __atomic_load_n builtin with acquire semantics
-         * __ATOMIC_ACQUIRE ensures proper memory ordering for the load */
-        membar_log_callback cb = __atomic_load_n(&log_callback, __ATOMIC_ACQUIRE);
-        /* Execute the actual write memory barrier using GCC/Clang builtin BEFORE logging */
-        __atomic_thread_fence(__ATOMIC_RELEASE);
-        if (cb) cb("wmb: using GNU __atomic_thread_fence(__ATOMIC_RELEASE)");
+        MEMBAR_WITH_LOG_GNU(
+            __atomic_thread_fence(__ATOMIC_RELEASE),
+            "wmb: using GNU __atomic_thread_fence(__ATOMIC_RELEASE)"
+        );
     #else
-        /* Execute the actual write memory barrier using GCC/Clang builtin BEFORE logging */
-        __atomic_thread_fence(__ATOMIC_RELEASE);
-        /* Fallback for GCC/Clang without atomic support */
-        if (log_callback) log_callback("wmb: using GNU __atomic_thread_fence(__ATOMIC_RELEASE)");
+        MEMBAR_WITH_LOG_SIMPLE(
+            __atomic_thread_fence(__ATOMIC_RELEASE),
+            "wmb: using GNU __atomic_thread_fence(__ATOMIC_RELEASE)"
+        );
     #endif
 #elif defined(HAS_BSD_FALLBACK)
-    if (log_callback) log_callback("wmb: using BSD __asm__ __volatile__ compiler barrier");
-    __asm__ __volatile__("" ::: "memory");
+    MEMBAR_WITH_LOG_SIMPLE(
+        __asm__ __volatile__("" ::: "memory"),
+        "wmb: using BSD __asm__ __volatile__ compiler barrier"
+    );
 #else
-    if (log_callback) log_callback("wmb: using fallback compiler barrier (no hardware barrier)");
-    asm volatile ("" ::: "memory");
+    MEMBAR_WITH_LOG_SIMPLE(
+        asm volatile ("" ::: "memory"),
+        "wmb: using fallback compiler barrier (no hardware barrier)"
+    );
 #endif
 }
 
@@ -163,42 +204,44 @@ void membar_wmb(void) {
  */
 void membar_rmb(void) {
 #if defined(HAS_C11_ATOMICS)
-    /* C11: Atomically load the callback pointer with acquire semantics */
-    membar_log_callback cb = atomic_load_explicit(&log_callback, memory_order_acquire);
-    /* Execute the actual read memory barrier BEFORE logging */
-    atomic_thread_fence(memory_order_acquire);
-    if (cb) cb("rmb: using C11 atomic_thread_fence(memory_order_acquire)");
+    MEMBAR_WITH_LOG_C11(
+        atomic_thread_fence(memory_order_acquire),
+        "rmb: using C11 atomic_thread_fence(memory_order_acquire)"
+    );
 #elif defined(HAS_MSVC)
     #if defined(HAS_MSVC_ATOMICS)
-        /* MSVC: Atomically read callback using compare-exchange trick */
-        membar_log_callback cb = (membar_log_callback)_InterlockedCompareExchangePointer(
-            (void* volatile*)&log_callback, NULL, NULL);
-        /* Execute the actual read memory barrier BEFORE logging */
-        MemoryBarrier();
-        if (cb) cb("rmb: using MSVC MemoryBarrier()");
+        MEMBAR_WITH_LOG_MSVC(
+            MemoryBarrier(),
+            "rmb: using MSVC MemoryBarrier()"
+        );
     #else
-        /* Execute the actual read memory barrier BEFORE logging */
-        MemoryBarrier();
-        if (log_callback) log_callback("rmb: using MSVC MemoryBarrier()");
+        MEMBAR_WITH_LOG_SIMPLE(
+            MemoryBarrier(),
+            "rmb: using MSVC MemoryBarrier()"
+        );
     #endif
 #elif defined(HAS_GNU_ATOMICS)
     #if defined(HAS_GNU_ATOMIC_BUILTINS)
-        /* GCC/Clang: Atomically load callback with acquire semantics */
-        membar_log_callback cb = __atomic_load_n(&log_callback, __ATOMIC_ACQUIRE);
-        /* Execute the actual read memory barrier BEFORE logging */
-        __atomic_thread_fence(__ATOMIC_ACQUIRE);
-        if (cb) cb("rmb: using GNU __atomic_thread_fence(__ATOMIC_ACQUIRE)");
+        MEMBAR_WITH_LOG_GNU(
+            __atomic_thread_fence(__ATOMIC_ACQUIRE),
+            "rmb: using GNU __atomic_thread_fence(__ATOMIC_ACQUIRE)"
+        );
     #else
-        /* Execute the actual read memory barrier BEFORE logging */
-        __atomic_thread_fence(__ATOMIC_ACQUIRE);
-        if (log_callback) log_callback("rmb: using GNU __atomic_thread_fence(__ATOMIC_ACQUIRE)");
+        MEMBAR_WITH_LOG_SIMPLE(
+            __atomic_thread_fence(__ATOMIC_ACQUIRE),
+            "rmb: using GNU __atomic_thread_fence(__ATOMIC_ACQUIRE)"
+        );
     #endif
 #elif defined(HAS_BSD_FALLBACK)
-    if (log_callback) log_callback("rmb: using BSD __asm__ __volatile__ compiler barrier");
-    __asm__ __volatile__("" ::: "memory");
+    MEMBAR_WITH_LOG_SIMPLE(
+        __asm__ __volatile__("" ::: "memory"),
+        "rmb: using BSD __asm__ __volatile__ compiler barrier"
+    );
 #else
-    if (log_callback) log_callback("rmb: using fallback compiler barrier (no hardware barrier)");
-    asm volatile ("" ::: "memory");
+    MEMBAR_WITH_LOG_SIMPLE(
+        asm volatile ("" ::: "memory"),
+        "rmb: using fallback compiler barrier (no hardware barrier)"
+    );
 #endif
 }
 
@@ -213,41 +256,43 @@ void membar_rmb(void) {
  */
 void membar_fence(void) {
 #if defined(HAS_C11_ATOMICS)
-    /* C11: Atomically load the callback pointer with acquire semantics */
-    membar_log_callback cb = atomic_load_explicit(&log_callback, memory_order_acquire);
-    /* Execute the actual full memory fence with sequential consistency BEFORE logging */
-    atomic_thread_fence(memory_order_seq_cst);
-    if (cb) cb("fence: using C11 atomic_thread_fence(memory_order_seq_cst)");
+    MEMBAR_WITH_LOG_C11(
+        atomic_thread_fence(memory_order_seq_cst),
+        "fence: using C11 atomic_thread_fence(memory_order_seq_cst)"
+    );
 #elif defined(HAS_MSVC)
     #if defined(HAS_MSVC_ATOMICS)
-        /* MSVC: Atomically read callback using compare-exchange trick */
-        membar_log_callback cb = (membar_log_callback)_InterlockedCompareExchangePointer(
-            (void* volatile*)&log_callback, NULL, NULL);
-        /* Execute the actual full memory fence BEFORE logging */
-        MemoryBarrier();
-        if (cb) cb("fence: using MSVC MemoryBarrier()");
+        MEMBAR_WITH_LOG_MSVC(
+            MemoryBarrier(),
+            "fence: using MSVC MemoryBarrier()"
+        );
     #else
-        /* Execute the actual full memory fence BEFORE logging */
-        MemoryBarrier();
-        if (log_callback) log_callback("fence: using MSVC MemoryBarrier()");
+        MEMBAR_WITH_LOG_SIMPLE(
+            MemoryBarrier(),
+            "fence: using MSVC MemoryBarrier()"
+        );
     #endif
 #elif defined(HAS_GNU_ATOMICS)
     #if defined(HAS_GNU_ATOMIC_BUILTINS)
-        /* GCC/Clang: Atomically load callback with acquire semantics */
-        membar_log_callback cb = __atomic_load_n(&log_callback, __ATOMIC_ACQUIRE);
-        /* Execute the actual full memory fence with sequential consistency BEFORE logging */
-        __atomic_thread_fence(__ATOMIC_SEQ_CST);
-        if (cb) cb("fence: using GNU __atomic_thread_fence(__ATOMIC_SEQ_CST)");
+        MEMBAR_WITH_LOG_GNU(
+            __atomic_thread_fence(__ATOMIC_SEQ_CST),
+            "fence: using GNU __atomic_thread_fence(__ATOMIC_SEQ_CST)"
+        );
     #else
-        /* Execute the actual full memory fence with sequential consistency BEFORE logging */
-        __atomic_thread_fence(__ATOMIC_SEQ_CST);
-        if (log_callback) log_callback("fence: using GNU __atomic_thread_fence(__ATOMIC_SEQ_CST)");
+        MEMBAR_WITH_LOG_SIMPLE(
+            __atomic_thread_fence(__ATOMIC_SEQ_CST),
+            "fence: using GNU __atomic_thread_fence(__ATOMIC_SEQ_CST)"
+        );
     #endif
 #elif defined(HAS_BSD_FALLBACK)
-    if (log_callback) log_callback("fence: using BSD __asm__ __volatile__ compiler barrier");
-    __asm__ __volatile__("" ::: "memory");
+    MEMBAR_WITH_LOG_SIMPLE(
+        __asm__ __volatile__("" ::: "memory"),
+        "fence: using BSD __asm__ __volatile__ compiler barrier"
+    );
 #else
-    if (log_callback) log_callback("fence: using fallback compiler barrier (no hardware barrier)");
-    asm volatile ("" ::: "memory");
+    MEMBAR_WITH_LOG_SIMPLE(
+        asm volatile ("" ::: "memory"),
+        "fence: using fallback compiler barrier (no hardware barrier)"
+    );
 #endif
 }

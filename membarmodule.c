@@ -53,24 +53,17 @@ static PyObject* python_log_callback = NULL;
  * @param message - the log message string to pass to Python callback
  */
 static void log_callback_wrapper(const char* message) {
-    /* Load the callback pointer once to avoid TOCTOU (time-of-check-time-of-use) race
-     * Another thread could set python_log_callback to NULL between check and use */
-    PyObject* callback = python_log_callback;
 
-    if (callback != NULL) {
-        // Acquire the GIL before calling into Python from C code
-        // This is critical for thread safety when called from barrier functions
-        PyGILState_STATE gstate = PyGILState_Ensure();
+    // Acquire the GIL before accessing python_log_callback for thread safety
+    PyGILState_STATE gstate = PyGILState_Ensure();
 
-        /* Recheck callback after acquiring GIL to prevent use-after-free
-         * The callback could have been cleared by another thread that held the GIL */
-        if (python_log_callback != NULL) {
-            PyObject* result = PyObject_CallFunction(python_log_callback, "s", message);
-            if (result == NULL) {
-                PyErr_Clear();  // do not let logging errors propagate
-            } else {
-                Py_DECREF(result);
-            }
+    if (python_log_callback != NULL) {
+
+        PyObject* result = PyObject_CallFunction(python_log_callback, "s", message);
+        if (result == NULL) {
+            PyErr_Clear();  // do not let logging errors propagate
+        } else {
+            Py_DECREF(result);
         }
 
         // Release the GIL after Python code completes
