@@ -1,4 +1,4 @@
-name: CI_pymembar
+name: CI_pymembar_testing
 
 # TODO change to tag
 #on: [push, pull_request]
