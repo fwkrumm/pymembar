@@ -239,7 +239,7 @@ void membar_rmb(void) {
  * before any that follow; used to enforce strict ordering across threads
  *
  * NOTE: If logging is enabled, there is a performance overhead from the callback check
- * and function call invocation. Logging should primarily be used for debugging, not in
+ * and callback invocation. Logging should primarily be used for debugging, not in
  * performance-critical production code.
  */
 void membar_fence(void) {
