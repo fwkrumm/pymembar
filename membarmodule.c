@@ -65,10 +65,10 @@ static void log_callback_wrapper(const char* message) {
         } else {
             Py_DECREF(result);
         }
-
-        // Release the GIL after Python code completes
-        PyGILState_Release(gstate);
     }
+
+    // Release the GIL after Python code completes (always, even if callback is NULL)
+    PyGILState_Release(gstate);
 }
 
 /**
