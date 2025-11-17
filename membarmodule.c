@@ -198,16 +198,20 @@ static void membar_module_free(void* m) {
     // This is atomic at the C level (see src/membar.c) so it's safe to call outside mutex
     membar_set_log_callback(NULL);
 
-    // STEP 2: Acquire mutex and clean up Python callback reference
+    // STEP 2: Acquire GIL and mutex, then clean up Python callback reference
+    // CRITICAL: Module cleanup functions (m_free) are not guaranteed to be called with
+    // the GIL held, but Py_XDECREF requires the GIL. We must acquire it explicitly.
     // Any in-flight log_callback_wrapper calls will complete because they already
-    // have their snapshot and reference count
+    // have their snapshot and reference count.
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
 #ifdef _WIN32
     EnterCriticalSection(&callback_lock);
 #else
     pthread_mutex_lock(&callback_lock);
 #endif
 
-    Py_XDECREF(python_log_callback);
+    Py_XDECREF(python_log_callback);  // Safe: GIL is held
     python_log_callback = NULL;
 
 #ifdef _WIN32
@@ -215,6 +219,8 @@ static void membar_module_free(void* m) {
 #else
     pthread_mutex_unlock(&callback_lock);
 #endif
+
+    PyGILState_Release(gstate);
 
     // STEP 3: Now safe to destroy mutex - no more wrapper calls can occur
 #ifdef _WIN32
