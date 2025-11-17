@@ -76,7 +76,7 @@ void membar_set_log_callback(membar_log_callback callback) {
 #if defined(HAS_C11_ATOMICS)
     /* C11: Use atomic_store_explicit with release semantics
      * Release ensures all prior writes are visible before the store.
-     * This coordinates with the acquire load in the barrier macros (see line 110)
+     * This coordinates with the acquire load in the barrier macros
      * to form a synchronizes-with relationship, ensuring thread-safe callback updates. */
     atomic_store_explicit(&log_callback, callback, memory_order_release);
 #elif defined(HAS_MSVC_ATOMICS)
