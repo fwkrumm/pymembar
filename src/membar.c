@@ -196,7 +196,7 @@ void membar_wmb(void) {
  * used to prevent speculative reads from violating program correctness
  *
  * NOTE: If logging is enabled, there is a performance overhead from the callback check
- * and string formatting. Logging should primarily be used for debugging, not in
+ * and callback invocation. Logging should primarily be used for debugging, not in
  * performance-critical production code.
  */
 void membar_rmb(void) {
