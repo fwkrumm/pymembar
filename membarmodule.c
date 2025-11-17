@@ -3,6 +3,15 @@
 #include <Python.h>
 #include "membar.h"
 
+#ifdef _WIN32
+#include <windows.h>
+static CRITICAL_SECTION callback_lock;
+static int lock_initialized = 0;
+#else
+#include <pthread.h>
+static pthread_mutex_t callback_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
 /**
  * Python wrapper for wmb (write memory barrier)
  * Calls the C implementation and returns None to Python
@@ -53,27 +62,46 @@ static PyObject* python_log_callback = NULL;
  * @param message - the log message string to pass to Python callback
  */
 static void log_callback_wrapper(const char* message) {
+    PyObject* callback_snapshot;
 
-    // Acquire the GIL before accessing python_log_callback for thread safety
-    PyGILState_STATE gstate = PyGILState_Ensure();
+    // Acquire mutex to safely read the callback pointer
+#ifdef _WIN32
+    EnterCriticalSection(&callback_lock);
+#else
+    pthread_mutex_lock(&callback_lock);
+#endif
 
-    if (python_log_callback != NULL) {
+    callback_snapshot = python_log_callback;
+    if (callback_snapshot != NULL) {
+        Py_INCREF(callback_snapshot);  // hold a reference while we use it
+    }
 
-        PyObject* result = PyObject_CallFunction(python_log_callback, "s", message);
+#ifdef _WIN32
+    LeaveCriticalSection(&callback_lock);
+#else
+    pthread_mutex_unlock(&callback_lock);
+#endif
+
+    // Now invoke the callback outside the mutex (but inside the GIL)
+    if (callback_snapshot != NULL) {
+        PyGILState_STATE gstate = PyGILState_Ensure();
+
+        PyObject* result = PyObject_CallFunction(callback_snapshot, "s", message);
         if (result == NULL) {
             PyErr_Clear();  // do not let logging errors propagate
         } else {
             Py_DECREF(result);
         }
-    }
 
-    // Release the GIL after Python code completes (always, even if callback is NULL)
-    PyGILState_Release(gstate);
+        Py_DECREF(callback_snapshot);  // release our temporary reference
+        PyGILState_Release(gstate);
+    }
 }
 
 /**
  * Python wrapper for set_log_callback
  * Sets or clears the logging callback function
+ * Protected by mutex to prevent race conditions in reference counting
  *
  * @param self - module instance (unused)
  * @param args - Python arguments tuple containing the callback function or None
@@ -81,6 +109,7 @@ static void log_callback_wrapper(const char* message) {
  */
 static PyObject* py_membar_set_log_callback(PyObject* self, PyObject* args) {
     PyObject* callback;
+    PyObject* old_callback;
 
     // PyArg_ParseTuple: extract Python arguments into C variables
     // "O" format = accept any Python object
@@ -91,31 +120,42 @@ static PyObject* py_membar_set_log_callback(PyObject* self, PyObject* args) {
 
     // handle None to disable logging
     if (callback == Py_None) {
-        // Py_XDECREF: safely decrease reference count of old callback
-        // (X variant is safe even if python_log_callback is NULL)
-        Py_XDECREF(python_log_callback);
-        python_log_callback = NULL;
-
-        // disable logging at C level by passing NULL
-        membar_set_log_callback(NULL);
-        Py_RETURN_NONE;
-    }
-
-    // PyCallable_Check: verify the object can be called like a function
-    // Returns 1 if callable, 0 if not
-    if (!PyCallable_Check(callback)) {
+        callback = NULL;  // treat None as NULL for cleaner code below
+    } else if (!PyCallable_Check(callback)) {
+        // PyCallable_Check: verify the object can be called like a function
+        // Returns 1 if callable, 0 if not
         // PyErr_SetString: set a Python exception that will be raised
         PyErr_SetString(PyExc_TypeError, "callback must be callable or None");
         return NULL;  // returning NULL signals an exception occurred
     }
 
-    // store new callback and manage reference counting
-    Py_XDECREF(python_log_callback);   // release old callback (if any)
-    Py_INCREF(callback);               // increase ref count so Python won't GC it
-    python_log_callback = callback;    // store the callback for later use
+    // Acquire mutex to protect reference counting operations
+#ifdef _WIN32
+    EnterCriticalSection(&callback_lock);
+#else
+    pthread_mutex_lock(&callback_lock);
+#endif
 
-    // register our C wrapper function that will call the Python callback
-    membar_set_log_callback(log_callback_wrapper);
+    // atomically swap callbacks and manage reference counting
+    old_callback = python_log_callback;
+    python_log_callback = callback;
+
+    if (callback != NULL) {
+        Py_INCREF(callback);  // increase ref count so Python won't GC it
+    }
+
+#ifdef _WIN32
+    LeaveCriticalSection(&callback_lock);
+#else
+    pthread_mutex_unlock(&callback_lock);
+#endif
+
+    // Py_XDECREF: safely decrease reference count of old callback outside mutex
+    // (X variant is safe even if old_callback is NULL)
+    Py_XDECREF(old_callback);
+
+    // register/unregister our C wrapper function at the C level
+    membar_set_log_callback(callback != NULL ? log_callback_wrapper : NULL);
 
     Py_RETURN_NONE;  // return None to Python (success)
 }
@@ -128,20 +168,65 @@ static PyMethodDef MembarMethods[] = {
     {NULL, NULL, 0, NULL}
 };
 
+/**
+ * Module cleanup function
+ * Called when the module is being unloaded
+ */
+static void membar_module_free(void* m) {
+    // Clean up the callback
+#ifdef _WIN32
+    EnterCriticalSection(&callback_lock);
+#else
+    pthread_mutex_lock(&callback_lock);
+#endif
+
+    Py_XDECREF(python_log_callback);
+    python_log_callback = NULL;
+
+#ifdef _WIN32
+    LeaveCriticalSection(&callback_lock);
+#else
+    pthread_mutex_unlock(&callback_lock);
+#endif
+
+    membar_set_log_callback(NULL);
+
+    // Destroy the mutex
+#ifdef _WIN32
+    DeleteCriticalSection(&callback_lock);
+    lock_initialized = 0;
+#else
+    pthread_mutex_destroy(&callback_lock);
+#endif
+}
+
 static struct PyModuleDef membarmodule = {
     PyModuleDef_HEAD_INIT,
     "_membar",                                 // module name should match the extension name
     "Memory barrier utilities for Python",     // module docstring
     -1,                                        // size of per-interpreter state or -1
-    MembarMethods
+    MembarMethods,
+    NULL,                                      // m_slots
+    NULL,                                      // m_traverse
+    NULL,                                      // m_clear
+    membar_module_free                         // m_free - cleanup function
 };
 
 /**
  * Module initialization function
  * Called when the _membar module is imported in Python
+ * Initializes the mutex for thread-safe callback management
  *
  * @return PyObject* - the initialized module object
  */
 PyMODINIT_FUNC PyInit__membar(void) {          // function name must match extension name
+#ifdef _WIN32
+    if (!lock_initialized) {
+        InitializeCriticalSection(&callback_lock);
+        lock_initialized = 1;
+    }
+#endif
+    // pthread mutex is statically initialized with PTHREAD_MUTEX_INITIALIZER
+
     return PyModule_Create(&membarmodule);
 }
