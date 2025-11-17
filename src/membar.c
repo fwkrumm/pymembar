@@ -156,7 +156,7 @@ void membar_set_log_callback(membar_log_callback callback) {
  * used to enforce ordering in concurrent systems where write reordering may occur
  *
  * NOTE: If logging is enabled, there is a performance overhead from the callback check
- * and string formatting. Logging should primarily be used for debugging, not in
+ * and callback invocation. Logging should primarily be used for debugging, not in
  * performance-critical production code.
  */
 void membar_wmb(void) {
