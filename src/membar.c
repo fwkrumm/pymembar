@@ -125,7 +125,7 @@ void membar_set_log_callback(membar_log_callback callback) {
          * While this looks like a compare-exchange, it's the idiomatic MSVC pattern \
          * for atomic pointer loads because: \
          * 1. MSVC lacks a dedicated _InterlockedLoadPointer intrinsic \
-         * 2. It provides full memory barrier semantics (works on ARM and other weak-order CPUs) \
+         * 2. It provides full memory barrier semantics (works on ARM and other weakly-ordered CPUs) \
          * 3. It coordinates properly with _InterlockedExchangePointer in the store operation \
          * 4. This is the standard pattern used in Windows kernel and runtime code \
          * The operation reads atomically without actually modifying the value. */ \
