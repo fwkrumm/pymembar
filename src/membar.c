@@ -93,7 +93,7 @@ void membar_set_log_callback(membar_log_callback callback) {
 #endif
 }
 
-/* macos and freebsd fallback */
+/* macOS and FreeBSD fallback */
 #if defined(__APPLE__) || defined(__FreeBSD__)
   #define HAS_BSD_FALLBACK 1
 #endif
@@ -121,13 +121,15 @@ void membar_set_log_callback(membar_log_callback callback) {
 #if defined(HAS_MSVC_ATOMICS)
   #define MEMBAR_WITH_LOG_MSVC(barrier_call, log_msg) \
     do { \
-        /* Use _InterlockedCompareExchangePointer(NULL, NULL) to perform atomic read. \
+        /* Use _InterlockedCompareExchangePointer(&variable, NULL, NULL) to perform atomic read. \
          * While this looks like a compare-exchange, it's the idiomatic MSVC pattern \
          * for atomic pointer loads because: \
          * 1. MSVC lacks a dedicated _InterlockedLoadPointer intrinsic \
          * 2. It provides full memory barrier semantics (works on ARM and other weakly-ordered CPUs) \
          * 3. It coordinates properly with _InterlockedExchangePointer in the store operation \
          * 4. This is the standard pattern used in Windows kernel and runtime code \
+         * 5. The pattern compares the current value with NULL and exchanges it with NULL, \
+         *    effectively reading the value atomically without modification \
          * The operation reads atomically without actually modifying the value. */ \
         membar_log_callback cb = (membar_log_callback)_InterlockedCompareExchangePointer( \
             (void* volatile*)&log_callback, NULL, NULL); \
@@ -169,13 +171,21 @@ void membar_wmb(void) {
         "wmb: using C11 atomic_thread_fence(memory_order_release)"
     );
 #elif defined(HAS_MSVC_ATOMICS)
-    /* Check HAS_MSVC_ATOMICS directly to match the macro we're using */
+    /* Check HAS_MSVC_ATOMICS (not HAS_MSVC) because:
+     * 1. MEMBAR_WITH_LOG_MSVC is only defined when HAS_MSVC_ATOMICS is set
+     * 2. HAS_MSVC_ATOMICS is only defined when MSVC AND C11 atomics are unavailable (lines 28-31)
+     * 3. This ensures C11 atomics take precedence when available (more portable)
+     * 4. Checking the exact macro that guards the code we use is clearer and more maintainable */
     MEMBAR_WITH_LOG_MSVC(
         MemoryBarrier(),
         "wmb: using MSVC MemoryBarrier()"
     );
 #elif defined(HAS_GNU_ATOMIC_BUILTINS)
-    /* Check HAS_GNU_ATOMIC_BUILTINS directly to match the macro we're using */
+    /* Check HAS_GNU_ATOMIC_BUILTINS (not HAS_GNU_ATOMICS) because:
+     * 1. MEMBAR_WITH_LOG_GNU is only defined when HAS_GNU_ATOMIC_BUILTINS is set
+     * 2. HAS_GNU_ATOMIC_BUILTINS is only defined for GCC/Clang without C11 atomics (lines 38-42)
+     * 3. This ensures C11 atomics take precedence when available (more portable)
+     * 4. Checking the exact macro that guards the code we use is clearer and more maintainable */
     MEMBAR_WITH_LOG_GNU(
         __atomic_thread_fence(__ATOMIC_RELEASE),
         "wmb: using GNU __atomic_thread_fence(__ATOMIC_RELEASE)"
@@ -209,13 +219,13 @@ void membar_rmb(void) {
         "rmb: using C11 atomic_thread_fence(memory_order_acquire)"
     );
 #elif defined(HAS_MSVC_ATOMICS)
-    /* Check HAS_MSVC_ATOMICS directly to match the macro we're using */
+    /* Check HAS_MSVC_ATOMICS (not HAS_MSVC) - see wmb for detailed explanation */
     MEMBAR_WITH_LOG_MSVC(
         MemoryBarrier(),
         "rmb: using MSVC MemoryBarrier()"
     );
 #elif defined(HAS_GNU_ATOMIC_BUILTINS)
-    /* Check HAS_GNU_ATOMIC_BUILTINS directly to match the macro we're using */
+    /* Check HAS_GNU_ATOMIC_BUILTINS (not HAS_GNU_ATOMICS) - see wmb for detailed explanation */
     MEMBAR_WITH_LOG_GNU(
         __atomic_thread_fence(__ATOMIC_ACQUIRE),
         "rmb: using GNU __atomic_thread_fence(__ATOMIC_ACQUIRE)"
@@ -249,13 +259,13 @@ void membar_fence(void) {
         "fence: using C11 atomic_thread_fence(memory_order_seq_cst)"
     );
 #elif defined(HAS_MSVC_ATOMICS)
-    /* Check HAS_MSVC_ATOMICS directly to match the macro we're using */
+    /* Check HAS_MSVC_ATOMICS (not HAS_MSVC) - see wmb for detailed explanation */
     MEMBAR_WITH_LOG_MSVC(
         MemoryBarrier(),
         "fence: using MSVC MemoryBarrier()"
     );
 #elif defined(HAS_GNU_ATOMIC_BUILTINS)
-    /* Check HAS_GNU_ATOMIC_BUILTINS directly to match the macro we're using */
+    /* Check HAS_GNU_ATOMIC_BUILTINS (not HAS_GNU_ATOMICS) - see wmb for detailed explanation */
     MEMBAR_WITH_LOG_GNU(
         __atomic_thread_fence(__ATOMIC_SEQ_CST),
         "fence: using GNU __atomic_thread_fence(__ATOMIC_SEQ_CST)"
