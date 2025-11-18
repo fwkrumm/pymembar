@@ -46,7 +46,7 @@ class TestMembarLogging(unittest.TestCase):
         membar.set_log_callback(my_logger)
         membar.wmb()
 
-        # verify that logging was called
+        # Verify that logging was called
         self.assertGreater(len(self.log_messages), 0)
         self.assertIn("wmb", self.log_messages[0])
 
