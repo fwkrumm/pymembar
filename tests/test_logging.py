@@ -124,7 +124,7 @@ class TestMembarLogging(unittest.TestCase):
         self.assertIn("fence", msg)
 
         # should mention some implementation detail
-        implementation_keywords = ["c11", "msvc", "gnu", "atomic", "barrier", "FreeBSD"]
+        implementation_keywords = ["c11", "msvc", "gnu", "atomic", "barrier", "bsd"]
         has_implementation_info = any(keyword in msg for keyword in implementation_keywords)
         self.assertTrue(has_implementation_info,
                        f"Log message should contain implementation info: {msg}")

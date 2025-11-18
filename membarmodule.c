@@ -132,8 +132,10 @@ static PyObject* py_membar_set_log_callback(PyObject* self, PyObject* args) {
     } else if (!PyCallable_Check(callback)) {
         // PyCallable_Check: verify the object can be called like a function
         // Returns 1 if callable, 0 if not
-        // PyErr_SetString: set a Python exception that will be raised
-        PyErr_SetString(PyExc_TypeError, "callback must be callable or None");
+        // PyErr_Format: set a Python exception with formatted message including actual type
+        PyErr_Format(PyExc_TypeError,
+                     "callback must be callable or None, got %s",
+                     Py_TYPE(callback)->tp_name);
         return NULL;  // returning NULL signals an exception occurred
     }
 

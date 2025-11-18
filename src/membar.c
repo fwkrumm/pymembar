@@ -76,12 +76,19 @@ void membar_set_log_callback(membar_log_callback callback) {
 #if defined(HAS_C11_ATOMICS)
     /* C11: Use atomic_store_explicit with release semantics
      * Release ensures all prior writes are visible before the store.
-     * This coordinates with the acquire load in the barrier macros
-     * to form a synchronizes-with relationship, ensuring thread-safe callback updates. */
+     * The synchronizes-with relationship is formed between this release store
+     * and the acquire load of the callback pointer in the barrier macros,
+     * ensuring thread-safe callback updates. */
     atomic_store_explicit(&log_callback, callback, memory_order_release);
 #elif defined(HAS_MSVC_ATOMICS)
     /* MSVC: Use _InterlockedExchangePointer for atomic pointer swap
-     * This intrinsic provides full memory barrier semantics */
+     * This intrinsic provides full memory barrier semantics
+     *
+     * NOTE: The cast from function pointer to void* is technically undefined behavior
+     * in C (POSIX requires it, but ISO C does not guarantee it). However, this works
+     * in practice on all platforms that support _InterlockedExchangePointer (Windows
+     * x86/x64/ARM). Windows ABI guarantees function pointers and data pointers have
+     * the same size and representation. */
     _InterlockedExchangePointer((void* volatile*)&log_callback, (void*)callback);
 #elif defined(HAS_GNU_ATOMIC_BUILTINS)
     /* GCC/Clang: Use __atomic_store_n with release semantics
@@ -121,16 +128,20 @@ void membar_set_log_callback(membar_log_callback callback) {
 #if defined(HAS_MSVC_ATOMICS)
   #define MEMBAR_WITH_LOG_MSVC(barrier_call, log_msg) \
     do { \
-        /* Use _InterlockedCompareExchangePointer(&variable, NULL, NULL) to perform atomic read. \
-         * While this looks like a compare-exchange, it's the idiomatic MSVC pattern \
-         * for atomic pointer loads because: \
-         * 1. MSVC lacks a dedicated _InterlockedLoadPointer intrinsic \
-         * 2. It provides full memory barrier semantics (works on ARM and other weakly-ordered CPUs) \
-         * 3. It coordinates properly with _InterlockedExchangePointer in the store operation \
-         * 4. This is the standard pattern used in Windows kernel and runtime code \
-         * 5. The pattern compares the current value with NULL and exchanges it with NULL, \
-         *    effectively reading the value atomically without modification \
-         * The operation reads atomically without actually modifying the value. */ \
+        /* Use _InterlockedCompareExchangePointer(&variable, NULL, NULL) to perform atomic read.
+         * While this looks like a compare-exchange, it's the idiomatic MSVC pattern
+         * for atomic pointer loads because:
+         * 1. MSVC lacks a dedicated _InterlockedLoadPointer intrinsic
+         * 2. It provides full memory barrier semantics (works on ARM and other weakly-ordered CPUs)
+         * 3. It coordinates properly with _InterlockedExchangePointer in the store operation
+         * 4. This is the standard pattern used in Windows kernel and runtime code
+         * 5. The pattern compares the current value with NULL and exchanges it with NULL,
+         *    effectively reading the value atomically without modification
+         * The operation reads atomically without actually modifying the value.
+         *
+         * NOTE: The cast from void* to function pointer is technically undefined behavior
+         * in ISO C, but works in practice on all Windows platforms (x86/x64/ARM) where
+         * function and data pointers have the same size and representation (Windows ABI). */ \
         membar_log_callback cb = (membar_log_callback)_InterlockedCompareExchangePointer( \
             (void* volatile*)&log_callback, NULL, NULL); \
         barrier_call; \
