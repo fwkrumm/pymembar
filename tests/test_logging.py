@@ -74,7 +74,7 @@ class TestMembarLogging(unittest.TestCase):
         membar.rmb()
         membar.fence()
 
-        # no messages should be logged
+        # No messages should be logged
         self.assertEqual(len(self.log_messages), 0)
 
     def test_logging_can_be_disabled(self):
