@@ -61,7 +61,7 @@ class TestMembarLogging(unittest.TestCase):
         membar.rmb()
         membar.fence()
 
-        # verify all three functions logged
+        # Verify all three functions logged
         self.assertEqual(len(self.log_messages), 3)
         self.assertIn("wmb", self.log_messages[0])
         self.assertIn("rmb", self.log_messages[1])
