@@ -46,7 +46,7 @@ class TestMembarLogging(unittest.TestCase):
         membar.set_log_callback(my_logger)
         membar.wmb()
 
-        # verify that logging was called
+        # Verify that logging was called
         self.assertGreater(len(self.log_messages), 0)
         self.assertIn("wmb", self.log_messages[0])
 
@@ -61,7 +61,7 @@ class TestMembarLogging(unittest.TestCase):
         membar.rmb()
         membar.fence()
 
-        # verify all three functions logged
+        # Verify all three functions logged
         self.assertEqual(len(self.log_messages), 3)
         self.assertIn("wmb", self.log_messages[0])
         self.assertIn("rmb", self.log_messages[1])
@@ -74,7 +74,7 @@ class TestMembarLogging(unittest.TestCase):
         membar.rmb()
         membar.fence()
 
-        # no messages should be logged
+        # No messages should be logged
         self.assertEqual(len(self.log_messages), 0)
 
     def test_logging_can_be_disabled(self):
@@ -91,7 +91,7 @@ class TestMembarLogging(unittest.TestCase):
         membar.set_log_callback(None)
         membar.wmb()
 
-        # message count should not increase
+        # Message count should not increase
         self.assertEqual(len(self.log_messages), 1)
 
     def test_logging_callback_receives_string(self):
