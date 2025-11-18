@@ -91,7 +91,7 @@ class TestMembarLogging(unittest.TestCase):
         membar.set_log_callback(None)
         membar.wmb()
 
-        # message count should not increase
+        # Message count should not increase
         self.assertEqual(len(self.log_messages), 1)
 
     def test_logging_callback_receives_string(self):
