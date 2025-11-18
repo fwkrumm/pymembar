@@ -29,6 +29,18 @@ MEMBAR_EXPORT void membar_rmb(void);
  */
 MEMBAR_EXPORT void membar_fence(void);
 
+/**
+ * logging callback function type
+ * @param message - the log message to output
+ */
+typedef void (*membar_log_callback)(const char* message);
+
+/**
+ * set optional logging callback
+ * @param callback - function to call for logging, or NULL to disable logging
+ */
+MEMBAR_EXPORT void membar_set_log_callback(membar_log_callback callback);
+
 #ifdef __cplusplus
 }
 #endif
