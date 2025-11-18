@@ -60,12 +60,19 @@ static PyObject* python_log_callback = NULL;
  * This function is called from C code and bridges to Python
  * Acquires the GIL before calling Python code for thread safety
  *
+ * CRITICAL: The GIL must be acquired BEFORE any Py_INCREF/Py_DECREF operations.
+ * We acquire the GIL first, then the mutex, to ensure all Python C API calls are safe.
+ *
  * @param message - the log message string to pass to Python callback
  */
 static void log_callback_wrapper(const char* message) {
     PyObject* callback_snapshot;
+    PyGILState_STATE gstate;
 
-    // Acquire mutex to safely read the callback pointer
+    // STEP 1: Acquire GIL first - required for all Python C API operations
+    gstate = PyGILState_Ensure();
+
+    // STEP 2: Acquire mutex to safely read the callback pointer
 #ifdef _WIN32
     EnterCriticalSection(&callback_lock);
 #else
@@ -74,7 +81,7 @@ static void log_callback_wrapper(const char* message) {
 
     callback_snapshot = python_log_callback;
     if (callback_snapshot != NULL) {
-        Py_INCREF(callback_snapshot);  // hold a reference while we use it
+        Py_INCREF(callback_snapshot);  // Safe: GIL is held
     }
 
 #ifdef _WIN32
@@ -83,10 +90,8 @@ static void log_callback_wrapper(const char* message) {
     pthread_mutex_unlock(&callback_lock);
 #endif
 
-    // Now invoke the callback outside the mutex (but inside the GIL)
+    // STEP 3: Invoke the callback outside the mutex (GIL still held)
     if (callback_snapshot != NULL) {
-        PyGILState_STATE gstate = PyGILState_Ensure();
-
         PyObject* result = PyObject_CallFunction(callback_snapshot, "s", message);
         if (result == NULL) {
             PyErr_Clear();  // do not let logging errors propagate
@@ -95,8 +100,10 @@ static void log_callback_wrapper(const char* message) {
         }
 
         Py_DECREF(callback_snapshot);  // release our temporary reference
-        PyGILState_Release(gstate);
     }
+
+    // STEP 4: Release GIL after all Python operations complete
+    PyGILState_Release(gstate);
 }
 
 /**
