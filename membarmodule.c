@@ -257,6 +257,8 @@ static struct PyModuleDef membarmodule = {
  * @return PyObject* - the initialized module object
  */
 PyMODINIT_FUNC PyInit__membar(void) {          // function name must match extension name
+    PyObject* module;
+
     // Initialize the mutex on first import (or after module reload)
     // Safe due to Python's import lock protecting this function
     if (!lock_initialized) {
@@ -268,5 +270,17 @@ PyMODINIT_FUNC PyInit__membar(void) {          // function name must match exten
         lock_initialized = 1;
     }
 
-    return PyModule_Create(&membarmodule);
+    module = PyModule_Create(&membarmodule);
+
+    // If module creation failed, clean up the mutex to prevent resource leak
+    if (module == NULL) {
+#ifdef _WIN32
+        DeleteCriticalSection(&callback_lock);
+#else
+        pthread_mutex_destroy(&callback_lock);
+#endif
+        lock_initialized = 0;
+    }
+
+    return module;
 }
