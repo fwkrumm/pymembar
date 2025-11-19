@@ -60,8 +60,20 @@ static PyObject* python_log_callback = NULL;
  * This function is called from C code and bridges to Python
  * Acquires the GIL before calling Python code for thread safety
  *
- * CRITICAL: The GIL must be acquired BEFORE any Py_INCREF/Py_DECREF operations.
- * We acquire the GIL first, then the mutex, to ensure all Python C API calls are safe.
+ * LOCK ORDERING (GIL → mutex):
+ * We acquire GIL first, then mutex. This ordering is consistent with py_membar_set_log_callback,
+ * which is called from Python (GIL already held) and then acquires the mutex.
+ *
+ * WHY THIS DOESN'T CAUSE PERFORMANCE ISSUES:
+ * - The mutex critical section is tiny (just reading a pointer and calling Py_INCREF)
+ * - The callback invocation happens OUTSIDE the mutex (only GIL held)
+ * - This is the standard pattern for Python C extensions that need to protect Python objects
+ *
+ * RACE CONDITION PREVENTION:
+ * We must Py_INCREF while holding the mutex to prevent:
+ * - Thread A reads callback (refcount=1), releases mutex
+ * - Thread B sets callback to None, DECREFs (refcount=0, freed!)
+ * - Thread A tries to INCREF freed memory ❌
  *
  * @param message - the log message string to pass to Python callback
  */
@@ -69,10 +81,10 @@ static void log_callback_wrapper(const char* message) {
     PyObject* callback_snapshot;
     PyGILState_STATE gstate;
 
-    // STEP 1: Acquire GIL first - required for all Python C API operations
+    // STEP 1: Acquire GIL (required for Py_INCREF)
     gstate = PyGILState_Ensure();
 
-    // STEP 2: Acquire mutex to safely read the callback pointer
+    // STEP 2: Acquire mutex to read callback pointer (tiny critical section)
 #ifdef _WIN32
     EnterCriticalSection(&callback_lock);
 #else
@@ -81,7 +93,7 @@ static void log_callback_wrapper(const char* message) {
 
     callback_snapshot = python_log_callback;
     if (callback_snapshot != NULL) {
-        Py_INCREF(callback_snapshot);  // Safe: GIL is held
+        Py_INCREF(callback_snapshot);  // Safe: GIL + mutex both held
     }
 
 #ifdef _WIN32
@@ -90,7 +102,7 @@ static void log_callback_wrapper(const char* message) {
     pthread_mutex_unlock(&callback_lock);
 #endif
 
-    // STEP 3: Invoke the callback outside the mutex (GIL still held)
+    // STEP 3: Invoke callback outside mutex (only GIL held)
     if (callback_snapshot != NULL) {
         PyObject* result = PyObject_CallFunction(callback_snapshot, "s", message);
         if (result == NULL) {
@@ -99,10 +111,10 @@ static void log_callback_wrapper(const char* message) {
             Py_DECREF(result);
         }
 
-        Py_DECREF(callback_snapshot);  // release our temporary reference
+        Py_DECREF(callback_snapshot);
     }
 
-    // STEP 4: Release GIL after all Python operations complete
+    // STEP 4: Release GIL
     PyGILState_Release(gstate);
 }
 
