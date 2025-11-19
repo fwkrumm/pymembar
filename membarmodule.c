@@ -69,11 +69,16 @@ static PyObject* python_log_callback = NULL;
  * - The callback invocation happens OUTSIDE the mutex (only GIL held)
  * - This is the standard pattern for Python C extensions that need to protect Python objects
  *
- * RACE CONDITION PREVENTION:
- * We must Py_INCREF while holding the mutex to prevent:
- * - Thread A reads callback (refcount=1), releases mutex
- * - Thread B sets callback to None, DECREFs (refcount=0, freed!)
- * - Thread A tries to INCREF freed memory ❌
+ * RACE CONDITION PREVENTION - WHY BOTH LOCKS ARE NEEDED:
+ * 1. GIL is required: Py_INCREF modifies Python object reference counts, which requires
+ *    the GIL to be held (Python C API requirement). Calling Py_INCREF without the GIL
+ *    causes undefined behavior and data corruption.
+ * 2. Mutex is required: We must hold the mutex during BOTH the pointer read AND Py_INCREF
+ *    to prevent this race:
+ *    - Thread A reads callback (refcount=1), releases mutex
+ *    - Thread B sets callback to None, DECREFs (refcount=0, freed!)
+ *    - Thread A tries to INCREF freed memory ❌
+ * 3. Therefore: GIL must be acquired first, then mutex, then Py_INCREF while holding both
  *
  * @param message - the log message string to pass to Python callback
  */
