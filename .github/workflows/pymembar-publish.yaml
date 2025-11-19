@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   Build:
-    environment: python-tests
+    # environment: python-tests # REVERT before merge
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
