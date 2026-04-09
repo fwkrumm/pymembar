@@ -8,4 +8,4 @@ except ImportError as e:
 
 # do NOT alter the following line in any way EXCEPT changing
 # the version number. no comments, no rename, whatsoever
-__version__ = "0.0.4"
+__version__ = "0.1.0"

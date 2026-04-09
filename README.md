@@ -86,7 +86,7 @@ However, memory barriers can still be useful on x86 in specific scenarios:
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.10+
 - Compatible with Windows, Linux, and macOS
 
 ## Contributing
@@ -103,6 +103,7 @@ Parts of the core code, the tests, this README, and documentation strings were g
 - 0.0.2 - Added ARM build support
 - 0.0.3 - Added logging support and multiple synchronization implementations
 - 0.0.4 - Improved logging thread safety and documentation
+- 0.1.0 - Dropped EOL Python versions (3.8, 3.9); minimum is now Python 3.10
 
 
 ## TODOs
