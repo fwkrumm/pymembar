@@ -21,19 +21,19 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-24.04-arm]
 
     steps:
-    - uses: actions/checkout@v6
-    - name: Set up Python 3.x
-      uses: actions/setup-python@v6
-      with:
-        python-version: '3.x'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    - name: Build extension
-      run: pip install -e .
-    - name: Run unit tests
-      run: python -m unittest discover -s tests
+      - uses: actions/checkout@v6
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Build extension
+        run: pip install -e .
+      - name: Run unit tests
+        run: python -m unittest discover -s tests
 
   Pylint:
     runs-on: ${{ matrix.os }}
@@ -43,16 +43,16 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-24.04-arm]
 
     steps:
-    - uses: actions/checkout@v6
-    - name: Set up Python 3.x
-      uses: actions/setup-python@v6
-      with:
-        python-version: '3.x'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    - name: Build extension
-      run: pip install -e . --no-deps
-    - name: Run Pylint
-      run: pylint membar/
+      - uses: actions/checkout@v6
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Build extension
+        run: pip install -e . --no-deps
+      - name: Run Pylint
+        run: pylint membar/
