@@ -10,6 +10,9 @@ concurrency:
   group: weekly-latest-python
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   Unittests:
     runs-on: ${{ matrix.os }}
