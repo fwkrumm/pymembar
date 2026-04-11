@@ -54,6 +54,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     - name: Build extension
-      run: pip install -e .
+      run: pip install -e . --no-deps
     - name: Run Pylint
       run: pylint membar/
