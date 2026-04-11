@@ -1,6 +1,6 @@
 name: Publish to PyPI
 
-# Triggered only on version tags (e.g. v1.2.3).
+# Triggered only on git tags (e.g. 1.2.3).
 # The approval gate (pypi-publish environment) only fires on actual releases.
 on:
   push:
