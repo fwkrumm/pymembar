@@ -44,6 +44,11 @@ jobs:
     environment: pypi-publish
     runs-on: ubuntu-latest
     steps:
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
       - name: Download wheels
         uses: actions/download-artifact@v4
         with:
