@@ -1,7 +1,11 @@
-name: CI_pymembar
+name: Publish to PyPI
 
-# TODO change to tag
-on: [push, pull_request]
+# Triggered only on version tags (e.g. v1.2.3).
+# The approval gate (pypi-publish environment) only fires on actual releases.
+on:
+  push:
+    tags:
+      - '*'
 
 # limit TOKEN permissions
 permissions:
@@ -35,7 +39,7 @@ jobs:
           name: wheels-${{ matrix.os }}
           path: dist/*.whl
 
-  # Only publish to PyPI on pushes to master branch; requires admin approval via the
+  # Requires admin approval via the "pypi-publish" environment's
   # "pypi-publish" environment's "Required reviewers" protection rule in GitHub repo settings.
   Publish:
     needs: Build
