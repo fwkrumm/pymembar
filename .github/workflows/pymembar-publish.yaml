@@ -28,9 +28,29 @@ jobs:
           CIBW_TEST_COMMAND_MACOS: "python -m unittest discover -s {project}/tests -p 'test_*.py' -v"
           CIBW_TEST_COMMAND_WINDOWS: "python -m unittest discover -s {project}\\tests -p test_*.py -v"
 
-      # Only publish to PyPI on pushes to master branch; make sure the version is not already published
+      - name: Upload wheels
+        if: github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: dist/*.whl
+
+  # Only publish to PyPI on pushes to master branch; requires admin approval via the
+  # "pypi-publish" environment's "Required reviewers" protection rule in GitHub repo settings.
+  Publish:
+    needs: Build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    environment: pypi-publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download wheels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          merge-multiple: true
+          path: dist
+
       - name: Publish to PyPI
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
           python -m pip install --upgrade pip
           python -m pip install twine
