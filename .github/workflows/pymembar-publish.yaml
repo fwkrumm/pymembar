@@ -1,7 +1,9 @@
-name: CI_pymembar
+name: Publish to PyPI
 
-# TODO change to tag
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
 
 # limit TOKEN permissions
 permissions:
@@ -15,9 +17,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-24.04-arm]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
 
       - name: Build C extension
         uses: pypa/cibuildwheel@v3.2.1
@@ -28,9 +30,33 @@ jobs:
           CIBW_TEST_COMMAND_MACOS: "python -m unittest discover -s {project}/tests -p 'test_*.py' -v"
           CIBW_TEST_COMMAND_WINDOWS: "python -m unittest discover -s {project}\\tests -p test_*.py -v"
 
-      # Only publish to PyPI on pushes to master branch; make sure the version is not already published
+      - name: Upload wheels
+        if: github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: dist/*.whl
+
+  # Requires admin approval via the "pypi-publish" environment's
+  # "pypi-publish" environment's "Required reviewers" protection rule in GitHub repo settings.
+  Publish:
+    needs: Build
+    environment: pypi-publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Download wheels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          merge-multiple: true
+          path: dist
+
       - name: Publish to PyPI
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
           python -m pip install --upgrade pip
           python -m pip install twine

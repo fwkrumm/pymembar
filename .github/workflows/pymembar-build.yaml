@@ -1,0 +1,33 @@
+name: CI Build
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  Build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest, ubuntu-24.04-arm]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup Python
+        uses: actions/setup-python@v6
+
+      - name: Build C extension
+        uses: pypa/cibuildwheel@v3.2.1
+        with:
+          output-dir: dist
+        env:
+          CIBW_TEST_COMMAND_LINUX: "python -m unittest discover -s {project}/tests -p 'test_*.py' -v"
+          CIBW_TEST_COMMAND_MACOS: "python -m unittest discover -s {project}/tests -p 'test_*.py' -v"
+          CIBW_TEST_COMMAND_WINDOWS: "python -m unittest discover -s {project}\\tests -p test_*.py -v"
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: dist/*.whl
+
