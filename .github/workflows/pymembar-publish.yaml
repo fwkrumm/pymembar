@@ -41,7 +41,7 @@ jobs:
   # "pypi-publish" environment's "Required reviewers" protection rule in GitHub repo settings.
   Publish:
     needs: Build
-    environment: pypi-publish
+    environment: python-tests
     runs-on: ubuntu-latest
     steps:
       - name: Setup Python
