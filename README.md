@@ -104,7 +104,7 @@ Parts of the core code, the tests, this README, and documentation strings were g
 - 0.0.3 - Added logging support and multiple synchronization implementations
 - 0.0.4 - Improved logging thread safety and documentation
 - 0.1.0 - Dropped EOL Python versions (3.8, 3.9); minimum is now Python 3.10
-- 0.1.1 - Support version 3 generally to prevent issues if package not release for new python version
+- 0.1.1 - Removed minor-version Python classifiers; Python 3.10+ remains required.
 
 
 ## TODOs
