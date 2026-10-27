@@ -105,6 +105,7 @@ Parts of the core code, the tests, this README, and documentation strings were g
 - 0.0.4 - Improved logging thread safety and documentation
 - 0.1.0 - Dropped EOL Python versions (3.8, 3.9); minimum is now Python 3.10
 - 0.1.1 - Removed minor-version Python classifiers; Python 3.10+ remains required.
+- 0.1.2 - Added Python 3.15 wheel and source distribution.
 
 
 ## TODOs

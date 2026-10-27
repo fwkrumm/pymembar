@@ -11,3 +11,4 @@ bin/*
 *.json
 *.bak
 __pycache__
+membar/*.pyd
